@@ -4,37 +4,62 @@
     <title>Admin Dashboard</title>
     <style>
         body { font-family: Arial, sans-serif; margin: 30px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
         th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
         th { background-color: #f2f2f2; }
-        .form-box { background: #f8f9fa; border: 1px solid #ccc; padding: 15px; border-radius: 5px; width: 400px; margin-bottom: 30px; }
+        .container { display: flex; gap: 20px; flex-wrap: wrap; margin-bottom: 30px; }
+        .form-box { background: #f8f9fa; border: 1px solid #ccc; padding: 15px; border-radius: 5px; width: 380px; }
         .form-group { display: flex; gap: 10px; }
-        input, button { width: 100%; margin-top: 8px; padding: 8px; box-sizing: border-box; }
-        button { background-color: #007bff; color: white; border: none; cursor: pointer; }
+        input, select, button { width: 100%; margin-top: 8px; padding: 8px; box-sizing: border-box; }
+        .btn-emp { background-color: #28a745; color: white; border: none; cursor: pointer; font-weight: bold; }
+        .btn-admin { background-color: #007bff; color: white; border: none; cursor: pointer; font-weight: bold; }
         .btn-approve { color: green; text-decoration: none; font-weight: bold; margin-right: 10px; }
         .btn-reject { color: red; text-decoration: none; font-weight: bold; }
+        .badge-mine { background-color: #d4edda; color: #155724; padding: 3px 6px; border-radius: 3px; font-size: 12px; font-weight: bold; }
+        .badge-other { background-color: #e2e3e5; color: #383d41; padding: 3px 6px; border-radius: 3px; font-size: 12px; }
     </style>
 </head>
 <body>
-    <h2>Admin Dashboard</h2>
+    <h2>Admin Dashboard (Logged in as: {{ session['name'] }} - ID: {{ current_admin }})</h2>
     <a href="/logout">Logout</a>
 
-    <div class="form-box">
-        <h3>Add New Employee (कर्मचारी जोडा)</h3>
-        <form method="POST">
-            <input type="text" name="user_id" placeholder="Unique User ID (eg: 101)" required>
-            <input type="password" name="password" placeholder="Password" required>
-            <input type="text" name="name" placeholder="Employee Name" required>
-            
-            <h4>Set Initial Leave Balances:</h4>
-            <div class="form-group">
-                <input type="number" name="el" placeholder="EL" value="0" required>
-                <input type="number" name="cl" placeholder="CL" value="0" required>
-                <input type="number" name="rest" placeholder="Rest" value="0" required>
-                <input type="number" name="cr" placeholder="CR" value="0" required>
-            </div>
-            <button type="submit">Add Employee</button>
-        </form>
+    <div class="container">
+        <!-- १. कर्मचाऱ्याचा फॉर्म (फक्त EL आणि CL) -->
+        <div class="form-box">
+            <h3>Add New Employee</h3>
+            <form method="POST">
+                <input type="hidden" name="action_type" value="add_employee">
+                <input type="text" name="user_id" placeholder="User ID (eg: 101)" required>
+                <input type="password" name="password" placeholder="Password" required>
+                <input type="text" name="name" placeholder="Employee Name" required>
+                
+                <label style="font-size: 12px; font-weight: bold; margin-top: 5px; display: block;">Approving Admin:</label>
+                <select name="assigned_admin" required>
+                    {% for a in admins_list %}
+                        <option value="{{ a[0] }}">{{ a[1] }} ({{ a[0] }})</option>
+                    {% endfor %}
+                </select>
+
+                <h4>Leave Balances:</h4>
+                <div class="form-group">
+                    <input type="number" name="el" placeholder="EL Balance" value="0" required>
+                    <input type="number" name="cl" placeholder="CL Balance" value="0" required>
+                </div>
+                <button type="submit" class="btn-emp">Add Employee</button>
+            </form>
+        </div>
+
+        <!-- २. नवीन ॲडमिन जोडण्याचा फॉर्म -->
+        <div class="form-box">
+            <h3>Add New Admin</h3>
+            <form method="POST">
+                <input type="hidden" name="action_type" value="add_admin">
+                <input type="text" name="user_id" placeholder="Admin User ID (eg: ADMIN2)" required>
+                <input type="password" name="password" placeholder="Admin Password" required>
+                <input type="text" name="name" placeholder="Admin Name" required>
+                <button type="submit" class="btn-admin" style="margin-top: 20px;">Add Admin</button>
+            </form>
+        </div>
     </div>
 
     <h3>Registered Employees List</h3>
@@ -42,32 +67,30 @@
         <tr>
             <th>User ID</th>
             <th>Name</th>
-            <th>EL</th>
-            <th>CL</th>
-            <th>Rest</th>
-            <th>CR</th>
+            <th>Assigned Admin</th>
+            <th>EL Balance</th>
+            <th>CL Balance</th>
         </tr>
         {% for u in users_list %}
         <tr>
             <td>{{ u[0] }}</td>
             <td>{{ u[1] }}</td>
             <td>{{ u[2] }}</td>
-            <td>{{ u[3] }}</td>
-            <td>{{ u[4] }}</td>
-            <td>{{ u[5] }}</td>
+            <td><b>{{ u[3] }}</b></td>
+            <td><b>{{ u[4] }}</b></td>
         </tr>
         {% endfor %}
     </table>
 
-    <h3 style="margin-top: 40px;">Pending Leave Applications</h3>
+    <h3 style="margin-top: 30px;">Leave Applications</h3>
     <table>
         <tr>
             <th>User ID</th>
-            <th>Name</th>
+            <th>Employee Name</th>
             <th>Type</th>
-            <th>Start Date</th>
-            <th>End Date</th>
+            <th>Dates</th>
             <th>Reason</th>
+            <th>Assigned Admin</th>
             <th>Status</th>
             <th>Action</th>
         </tr>
@@ -76,9 +99,15 @@
             <td>{{ req[1] }}</td>
             <td>{{ req[2] }}</td>
             <td><b>{{ req[3] }}</b></td>
-            <td>{{ req[4] }}</td>
-            <td>{{ req[5] }}</td>
+            <td>{{ req[4] }} to {{ req[5] }}</td>
             <td>{{ req[6] }}</td>
+            <td>
+                {% if req[8] == current_admin %}
+                    <span class="badge-mine">Assigned to You</span>
+                {% else %}
+                    <span class="badge-other">Assigned to {{ req[8] }}</span>
+                {% endif %}
+            </td>
             <td><b>{{ req[7] }}</b></td>
             <td>
                 {% if req[7] == 'Pending' %}
