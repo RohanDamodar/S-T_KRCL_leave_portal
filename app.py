@@ -9,17 +9,16 @@ def init_db():
     conn = sqlite3.connect('database.db')
     cursor = conn.cursor()
     
-    # Users Table (EL, CL, Rest, CR सह)
+    # Users Table (फक्त EL आणि CL balances ठेवले आहेत)
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS users (
             user_id TEXT PRIMARY KEY,
             password TEXT,
             name TEXT,
             role TEXT,
+            assigned_admin TEXT,
             el_balance INTEGER DEFAULT 0,
-            cl_balance INTEGER DEFAULT 0,
-            rest_balance INTEGER DEFAULT 0,
-            cr_balance INTEGER DEFAULT 0
+            cl_balance INTEGER DEFAULT 0
         )
     ''')
     
@@ -36,8 +35,8 @@ def init_db():
         )
     ''')
     
-    # Default Admin (जर आधी नसेल तर)
-    cursor.execute("INSERT OR IGNORE INTO users (user_id, password, name, role) VALUES ('ADMIN1', 'admin123', 'Admin Sir', 'admin')")
+    # Default Main Admin
+    cursor.execute("INSERT OR IGNORE INTO users (user_id, password, name, role, assigned_admin) VALUES ('ADMIN1', 'admin123', 'Main Admin', 'admin', '')")
     
     conn.commit()
     conn.close()
@@ -71,7 +70,7 @@ def login():
             
     return render_template('login.html')
 
-# Employee Dashboard Route
+# Employee Dashboard
 @app.route('/dashboard', methods=['GET', 'POST'])
 def user_dashboard():
     if 'user_id' not in session or session['role'] != 'employee':
@@ -90,18 +89,16 @@ def user_dashboard():
                        (session['user_id'], leave_type, start_date, end_date, reason))
         conn.commit()
     
-    # Get user leave balances (EL, CL, Rest, CR)
-    cursor.execute("SELECT el_balance, cl_balance, rest_balance, cr_balance FROM users WHERE user_id = ?", (session['user_id'],))
+    cursor.execute("SELECT el_balance, cl_balance FROM users WHERE user_id = ?", (session['user_id'],))
     balances = cursor.fetchone()
     
-    # Get user leave history
     cursor.execute("SELECT leave_type, start_date, end_date, reason, status FROM leave_requests WHERE user_id = ?", (session['user_id'],))
     requests = cursor.fetchall()
     conn.close()
     
     return render_template('dashboard.html', name=session['name'], balances=balances, requests=requests)
 
-# Admin Dashboard Route (नवीन युजर ॲड करण्यासाठी)
+# Admin Dashboard
 @app.route('/admin', methods=['GET', 'POST'])
 def admin_dashboard():
     if 'user_id' not in session or session['role'] != 'admin':
@@ -110,33 +107,57 @@ def admin_dashboard():
     conn = sqlite3.connect('database.db')
     cursor = conn.cursor()
     
-    # नवीन युजर ॲड करण्याचे लॉजिक
     if request.method == 'POST':
-        u_id = request.form['user_id']
-        pwd = request.form['password']
-        name = request.form['name']
-        el = request.form['el']
-        cl = request.form['cl']
-        rest = request.form['rest']
-        cr = request.form['cr']
+        action_type = request.form.get('action_type')
         
-        try:
-            cursor.execute("INSERT INTO users VALUES (?, ?, ?, 'employee', ?, ?, ?, ?)", (u_id, pwd, name, el, cl, rest, cr))
-            conn.commit()
-        except sqlite3.IntegrityError:
-            pass # हा ID आधीच असेल तर एरर टाळण्यासाठी
+        # १. नवीन Employee जोडणे (फक्त EL व CL सह)
+        if action_type == 'add_employee':
+            u_id = request.form['user_id']
+            pwd = request.form['password']
+            name = request.form['name']
+            assigned_admin = request.form['assigned_admin']
+            el = request.form['el']
+            cl = request.form['cl']
             
-    cursor.execute("SELECT leave_requests.id, leave_requests.user_id, users.name, leave_requests.leave_type, leave_requests.start_date, leave_requests.end_date, leave_requests.reason, leave_requests.status FROM leave_requests JOIN users ON leave_requests.user_id = users.user_id")
+            try:
+                cursor.execute("INSERT INTO users VALUES (?, ?, ?, 'employee', ?, ?, ?)", 
+                               (u_id, pwd, name, assigned_admin, el, cl))
+                conn.commit()
+            except sqlite3.IntegrityError:
+                pass
+
+        # २. नवीन Admin जोडणे
+        elif action_type == 'add_admin':
+            u_id = request.form['user_id']
+            pwd = request.form['password']
+            name = request.form['name']
+            
+            try:
+                cursor.execute("INSERT INTO users VALUES (?, ?, ?, 'admin', '', 0, 0)", (u_id, pwd, name))
+                conn.commit()
+            except sqlite3.IntegrityError:
+                pass
+            
+    cursor.execute('''
+        SELECT leave_requests.id, leave_requests.user_id, users.name, leave_requests.leave_type, 
+               leave_requests.start_date, leave_requests.end_date, leave_requests.reason, 
+               leave_requests.status, users.assigned_admin 
+        FROM leave_requests 
+        JOIN users ON leave_requests.user_id = users.user_id
+    ''')
     requests = cursor.fetchall()
     
-    cursor.execute("SELECT user_id, name, el_balance, cl_balance, rest_balance, cr_balance FROM users WHERE role = 'employee'")
+    cursor.execute("SELECT user_id, name, assigned_admin, el_balance, cl_balance FROM users WHERE role = 'employee'")
     users_list = cursor.fetchall()
+    
+    cursor.execute("SELECT user_id, name FROM users WHERE role = 'admin'")
+    admins_list = cursor.fetchall()
     
     conn.close()
     
-    return render_template('admin.html', requests=requests, users_list=users_list)
+    return render_template('admin.html', requests=requests, users_list=users_list, admins_list=admins_list, current_admin=session['user_id'])
 
-# Approve / Reject Action
+# Approve / Reject Action (फक्त EL आणि CL वजा होतील)
 @app.route('/action/<int:req_id>/<string:status>')
 def action(req_id, status):
     if 'user_id' in session and session['role'] == 'admin':
@@ -151,15 +172,10 @@ def action(req_id, status):
             u_id = data[0]
             l_type = data[1]
             
-            # निवडून दिलेल्या रजेच्या प्रकारानुसार १ दिवस वजा करणे
             if l_type == 'EL':
                 cursor.execute("UPDATE users SET el_balance = el_balance - 1 WHERE user_id = ?", (u_id,))
             elif l_type == 'CL':
                 cursor.execute("UPDATE users SET cl_balance = cl_balance - 1 WHERE user_id = ?", (u_id,))
-            elif l_type == 'Rest':
-                cursor.execute("UPDATE users SET rest_balance = rest_balance - 1 WHERE user_id = ?", (u_id,))
-            elif l_type == 'CR':
-                cursor.execute("UPDATE users SET cr_balance = cr_balance - 1 WHERE user_id = ?", (u_id,))
             
         conn.commit()
         conn.close()
