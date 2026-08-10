@@ -32,6 +32,9 @@
         .form-group input, .form-group select { padding: 9px 12px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 13px; outline: none; background-color: #f8fafc; }
         .form-group input:focus, .form-group select:focus { border-color: #0056b3; background-color: #ffffff; }
         
+        .checkbox-group { background: #f8fafc; border: 1px solid #cbd5e1; padding: 10px; border-radius: 4px; max-height: 100px; overflow-y: auto; }
+        .checkbox-item { display: flex; align-items: center; gap: 8px; font-size: 13px; margin-bottom: 4px; cursor: pointer; }
+        
         .balance-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         
         .btn-submit-emp { width: 100%; background-color: #10b981; color: white; border: none; padding: 10px; font-size: 14px; font-weight: bold; border-radius: 4px; cursor: pointer; margin-top: 10px; display: flex; justify-content: center; align-items: center; gap: 6px; }
@@ -54,10 +57,8 @@
         .btn-action-approve { background-color: #10b981; color: white; padding: 5px 10px; border-radius: 4px; text-decoration: none; font-weight: bold; font-size: 12px; margin-right: 5px; }
         .btn-action-reject { background-color: #ef4444; color: white; padding: 5px 10px; border-radius: 4px; text-decoration: none; font-weight: bold; font-size: 12px; margin-right: 5px; }
         .btn-action-cancel { color: #dc2626; border: 1px solid #fca5a5; background-color: #fef2f2; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; text-decoration: none; }
-        
         .btn-delete-user { color: #dc2626; background: #fee2e2; border: 1px solid #fca5a5; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; text-decoration: none; }
         .btn-delete-user:hover { background: #dc2626; color: white; }
-
         .footer { margin-top: auto; background-color: #e8eef7; text-align: center; padding: 12px; font-size: 12px; color: #555; border-top: 1px solid #d0dbe8; }
     </style>
 </head>
@@ -88,90 +89,53 @@
         <div class="forms-grid">
             <!-- Add Employee Form -->
             <div class="card">
-                <div class="card-header">
-                    <i class="fa-solid fa-user-plus"></i> Add New Employee
-                </div>
+                <div class="card-header"><i class="fa-solid fa-user-plus"></i> Add New Employee</div>
                 <form method="POST">
                     <input type="hidden" name="action_type" value="add_employee">
+                    <div class="form-group"><label>User ID / Employee ID *</label><input type="text" name="user_id" placeholder="e.g. 101" required></div>
+                    <div class="form-group"><label>Password *</label><input type="password" name="password" placeholder="Set Password" required></div>
+                    <div class="form-group"><label>Employee Name *</label><input type="text" name="name" placeholder="Full Name" required></div>
+                    <div class="form-group"><label>Joining Date *</label><input type="date" name="joining_date" required></div>
                     
                     <div class="form-group">
-                        <label>User ID / Employee ID *</label>
-                        <input type="text" name="user_id" placeholder="e.g. 101" required>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Password *</label>
-                        <input type="password" name="password" placeholder="Set Password" required>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Employee Name *</label>
-                        <input type="text" name="name" placeholder="Full Name" required>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Joining Date *</label>
-                        <input type="date" name="joining_date" required>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Approving Admin *</label>
-                        <select name="assigned_admin" required>
+                        <label>Approving Admins (Select Multiple) *</label>
+                        <div class="checkbox-group">
                             {% for a in admins_list %}
-                                <option value="{{ a[0] }}">{{ a[1] }} ({{ a[0] }})</option>
+                                <label class="checkbox-item">
+                                    <input type="checkbox" name="assigned_admins" value="{{ a[0] }}" checked>
+                                    {{ a[1] }} ({{ a[0] }})
+                                </label>
                             {% endfor %}
-                        </select>
+                        </div>
                     </div>
 
                     <div class="form-group">
-                        <label>Current Remaining Balances (Optional - Default 15 EL & 8 CL):</label>
+                        <label>Current Remaining Balances (Optional):</label>
                         <div class="balance-inputs">
                             <input type="number" name="el" placeholder="Remaining EL (eg: 10)">
                             <input type="number" name="cl" placeholder="Remaining CL (eg: 5)">
                         </div>
                     </div>
-
-                    <button type="submit" class="btn-submit-emp">
-                        <i class="fa-solid fa-check-circle"></i> Add Employee
-                    </button>
+                    <button type="submit" class="btn-submit-emp"><i class="fa-solid fa-check-circle"></i> Add Employee</button>
                 </form>
             </div>
 
             <!-- Add Admin Form -->
             <div class="card">
-                <div class="card-header">
-                    <i class="fa-solid fa-user-shield"></i> Add New Admin
-                </div>
+                <div class="card-header"><i class="fa-solid fa-user-shield"></i> Add New Admin</div>
                 <form method="POST">
                     <input type="hidden" name="action_type" value="add_admin">
-                    
-                    <div class="form-group">
-                        <label>Admin User ID *</label>
-                        <input type="text" name="user_id" placeholder="e.g. ADMIN2" required>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Admin Password *</label>
-                        <input type="password" name="password" placeholder="Set Admin Password" required>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Admin Name *</label>
-                        <input type="text" name="name" placeholder="Full Name" required>
-                    </div>
-
-                    <button type="submit" class="btn-submit-admin" style="margin-top: 130px;">
-                        <i class="fa-solid fa-plus-circle"></i> Add Admin
-                    </button>
+                    <div class="form-group"><label>Admin User ID *</label><input type="text" name="user_id" placeholder="e.g. ADMIN2" required></div>
+                    <div class="form-group"><label>Admin Password *</label><input type="password" name="password" placeholder="Set Admin Password" required></div>
+                    <div class="form-group"><label>Admin Name *</label><input type="text" name="name" placeholder="Full Name" required></div>
+                    <button type="submit" class="btn-submit-admin" style="margin-top: 140px;"><i class="fa-solid fa-plus-circle"></i> Add Admin</button>
                 </form>
             </div>
         </div>
 
         <!-- Registered Employees Table -->
         <div class="table-box">
-            <div class="card-header">
-                <i class="fa-solid fa-users"></i> Registered Employees List
-            </div>
+            <div class="card-header"><i class="fa-solid fa-users"></i> Registered Employees List</div>
             <div class="table-responsive">
                 <table>
                     <thead>
@@ -179,7 +143,7 @@
                             <th>User ID</th>
                             <th>Employee Name</th>
                             <th>Joining Date</th>
-                            <th>Assigned Admin</th>
+                            <th>Approving Admins</th>
                             <th>EL Balance</th>
                             <th>CL Balance</th>
                             <th>Action</th>
@@ -196,16 +160,12 @@
                                 <td><b style="color: #0056b3;">{{ u[4] }}</b></td>
                                 <td><b style="color: #10b981;">{{ u[5] }}</b></td>
                                 <td>
-                                    <a href="/delete_user/{{ u[0] }}" class="btn-delete-user" onclick="return confirm('तुम्हाला या कर्मचाऱ्याचा अकाऊंट सिस्टीममधून काढून टाकायचा आहे का?');">
-                                        <i class="fa-solid fa-user-xmark"></i> Delete
-                                    </a>
+                                    <a href="/delete_user/{{ u[0] }}" class="btn-delete-user" onclick="return confirm('कर्मचाऱ्याचा अकाऊंट डिलीट करायचा का?');"><i class="fa-solid fa-user-xmark"></i> Delete</a>
                                 </td>
                             </tr>
                             {% endfor %}
                         {% else %}
-                            <tr>
-                                <td colspan="7" style="text-align: center; color: #777;">कोणतेही कर्मचारी जोडलेले नाहीत.</td>
-                            </tr>
+                            <tr><td colspan="7" style="text-align: center; color: #777;">कोणतेही कर्मचारी जोडलेले नाहीत.</td></tr>
                         {% endif %}
                     </tbody>
                 </table>
@@ -214,9 +174,7 @@
 
         <!-- Leave Requests Table -->
         <div class="table-box">
-            <div class="card-header">
-                <i class="fa-solid fa-list-check"></i> Employee Leave Applications
-            </div>
+            <div class="card-header"><i class="fa-solid fa-list-check"></i> Employee Leave Applications</div>
             <div class="table-responsive">
                 <table>
                     <thead>
@@ -224,9 +182,9 @@
                             <th>User ID</th>
                             <th>Employee Name</th>
                             <th>Type</th>
-                            <th>Dates</th>
+                            <th>Dates Breakdown</th>
                             <th>Reason</th>
-                            <th>Assigned Admin</th>
+                            <th>Approving Admins</th>
                             <th>Status</th>
                             <th>Action</th>
                         </tr>
@@ -238,32 +196,39 @@
                                 <td><b>{{ req[1] }}</b></td>
                                 <td>{{ req[2] }}</td>
                                 <td><b>{{ req[3] }}</b></td>
-                                <td>{{ req[4] }} to {{ req[5] }}</td>
-                                <td>{{ req[6] }}</td>
                                 <td>
-                                    {% if req[8] == current_admin %}
-                                        <span class="badge-assigned-mine"><i class="fa-solid fa-user-check"></i> Assigned to You</span>
+                                    {% if req[3] == 'EL+CL' %}
+                                        <small style="display:block;"><b>EL:</b> {{ req[6] }}</small>
+                                        <small style="display:block;"><b>CL:</b> {{ req[7] }}</small>
                                     {% else %}
-                                        <span class="badge-assigned-other">Assigned to {{ req[8] }}</span>
+                                        {{ req[4] }} to {{ req[5] }}
+                                    {% endif %}
+                                </td>
+                                <td>{{ req[8] }}</td>
+                                <td>
+                                    {% if current_admin in req[10].split(',') or current_admin == 'ADMIN1' %}
+                                        <span class="badge-assigned-mine"><i class="fa-solid fa-user-check"></i> Authorized ({{ req[10] }})</span>
+                                    {% else %}
+                                        <span class="badge-assigned-other">Assigned to {{ req[10] }}</span>
                                     {% endif %}
                                 </td>
                                 <td>
-                                    {% if req[7] == 'Approved' %}
+                                    {% if req[9] == 'Approved' %}
                                         <span class="badge-approved">Approved</span>
-                                    {% elif req[7] == 'Pending' %}
+                                    {% elif req[9] == 'Pending' %}
                                         <span class="badge-pending">Pending</span>
-                                    {% elif req[7] == 'Rejected' %}
+                                    {% elif req[9] == 'Rejected' %}
                                         <span class="badge-rejected">Rejected</span>
                                     {% else %}
                                         <span class="badge-cancelled">Cancelled</span>
                                     {% endif %}
                                 </td>
                                 <td>
-                                    {% if req[8] == current_admin %}
-                                        {% if req[7] == 'Pending' %}
+                                    {% if current_admin in req[10].split(',') or current_admin == 'ADMIN1' %}
+                                        {% if req[9] == 'Pending' %}
                                             <a href="/action/{{ req[0] }}/Approved" class="btn-action-approve"><i class="fa-solid fa-check"></i> Approve</a>
                                             <a href="/action/{{ req[0] }}/Rejected" class="btn-action-reject"><i class="fa-solid fa-xmark"></i> Reject</a>
-                                        {% elif req[7] == 'Approved' %}
+                                        {% elif req[9] == 'Approved' %}
                                             <a href="/cancel_leave/{{ req[0] }}" class="btn-action-cancel" onclick="return confirm('ही मंजूर झालेली रजा रद्द करायची का?');">Cancel Approval</a>
                                         {% else %}
                                             -
@@ -275,9 +240,7 @@
                             </tr>
                             {% endfor %}
                         {% else %}
-                            <tr>
-                                <td colspan="8" style="text-align: center; color: #777;">कोणतेही अर्ज उपलब्ध नाहीत.</td>
-                            </tr>
+                            <tr><td colspan="8" style="text-align: center; color: #777;">कोणतेही अर्ज उपलब्ध नाहीत.</td></tr>
                         {% endif %}
                     </tbody>
                 </table>
