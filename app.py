@@ -46,7 +46,8 @@ def init_db():
             el_dates VARCHAR(50) DEFAULT '',
             cl_dates VARCHAR(50) DEFAULT '',
             reason TEXT NOT NULL,
-            status VARCHAR(20) DEFAULT 'Pending'
+            status VARCHAR(20) DEFAULT 'Pending',
+            approved_by VARCHAR(100) DEFAULT ''
         );
     ''')
     
@@ -54,6 +55,7 @@ def init_db():
         cursor.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS assigned_admin TEXT;")
         cursor.execute("ALTER TABLE leave_requests ADD COLUMN IF NOT EXISTS el_dates VARCHAR(50) DEFAULT '';")
         cursor.execute("ALTER TABLE leave_requests ADD COLUMN IF NOT EXISTS cl_dates VARCHAR(50) DEFAULT '';")
+        cursor.execute("ALTER TABLE leave_requests ADD COLUMN IF NOT EXISTS approved_by VARCHAR(100) DEFAULT '';")
     except Exception as e:
         conn.rollback()
 
@@ -168,7 +170,7 @@ def user_dashboard():
     cursor.execute("SELECT el_balance, cl_balance FROM users WHERE user_id = %s", (session['user_id'],))
     balances = cursor.fetchone()
     
-    cursor.execute("SELECT id, leave_type, start_date, end_date, el_dates, cl_dates, reason, status FROM leave_requests WHERE user_id = %s ORDER BY id DESC", (session['user_id'],))
+    cursor.execute("SELECT id, leave_type, start_date, end_date, el_dates, cl_dates, reason, status, approved_by FROM leave_requests WHERE user_id = %s ORDER BY id DESC", (session['user_id'],))
     requests = cursor.fetchall()
     
     cursor.close()
@@ -241,7 +243,6 @@ def admin_dashboard():
             name = request.form['name']
             joining_date = request.form['joining_date']
             
-            # Multiple Assigned Admins (Comma Separated string)
             selected_admins = request.form.getlist('assigned_admins')
             assigned_admin_str = ",".join(selected_admins) if selected_admins else session['user_id']
             
@@ -281,7 +282,7 @@ def admin_dashboard():
     cursor.execute('''
         SELECT leave_requests.id, leave_requests.user_id, users.name, leave_requests.leave_type, 
                leave_requests.start_date, leave_requests.end_date, leave_requests.el_dates, leave_requests.cl_dates,
-               leave_requests.reason, leave_requests.status, users.assigned_admin 
+               leave_requests.reason, leave_requests.status, users.assigned_admin, leave_requests.approved_by 
         FROM leave_requests 
         JOIN users ON leave_requests.user_id = users.user_id
         ORDER BY leave_requests.id DESC
@@ -322,7 +323,8 @@ def action(req_id, status):
         
         cursor.execute('''
             SELECT leave_requests.user_id, leave_requests.leave_type, leave_requests.start_date, leave_requests.end_date, 
-                   leave_requests.el_dates, leave_requests.cl_dates, leave_requests.status, users.assigned_admin 
+                   leave_requests.el_dates, leave_requests.cl_dates, leave_requests.status, users.assigned_admin,
+                   users.el_balance, users.cl_balance
             FROM leave_requests 
             JOIN users ON leave_requests.user_id = users.user_id 
             WHERE leave_requests.id = %s
@@ -330,31 +332,42 @@ def action(req_id, status):
         data = cursor.fetchone()
         
         if data:
-            u_id, l_type, start_date, end_date, el_dates, cl_dates, current_status, assigned_admin = data
+            u_id, l_type, start_date, end_date, el_dates, cl_dates, current_status, assigned_admin, current_el, current_cl = data
             assigned_list = [a.strip() for a in assigned_admin.split(',')] if assigned_admin else []
             
-            # Checks if current logged in admin is authorized
             if session['user_id'] in assigned_list or session['user_id'] == 'ADMIN1':
+                now_str = datetime.now().strftime("%d-%b-%Y %I:%M %p")
+                approver_info = f"{session['name']} ({session['user_id']}) at {now_str}"
+                
                 if status == 'Approved' and current_status != 'Approved':
                     if l_type == 'EL+CL':
+                        el_days, cl_days = 0, 0
                         if el_dates:
                             s_dt, e_dt = el_dates.split(' to ')
                             el_days = (datetime.strptime(e_dt, "%Y-%m-%d") - datetime.strptime(s_dt, "%Y-%m-%d")).days + 1
-                            cursor.execute("UPDATE users SET el_balance = el_balance - %s WHERE user_id = %s", (el_days, u_id))
                         if cl_dates:
                             s_dt, e_dt = cl_dates.split(' to ')
                             cl_days = (datetime.strptime(e_dt, "%Y-%m-%d") - datetime.strptime(s_dt, "%Y-%m-%d")).days + 1
-                            cursor.execute("UPDATE users SET cl_balance = cl_balance - %s WHERE user_id = %s", (cl_days, u_id))
+                        
+                        # Negative balance check
+                        if current_el >= el_days and current_cl >= cl_days:
+                            cursor.execute("UPDATE users SET el_balance = el_balance - %s, cl_balance = cl_balance - %s WHERE user_id = %s", (el_days, cl_days, u_id))
+                            cursor.execute("UPDATE leave_requests SET status = %s, approved_by = %s WHERE id = %s", (status, approver_info, req_id))
+                            conn.commit()
                     else:
                         total_days = (datetime.strptime(end_date, "%Y-%m-%d") - datetime.strptime(start_date, "%Y-%m-%d")).days + 1
                         if total_days > 0:
-                            if l_type == 'EL':
+                            if l_type == 'EL' and current_el >= total_days:
                                 cursor.execute("UPDATE users SET el_balance = el_balance - %s WHERE user_id = %s", (total_days, u_id))
-                            elif l_type == 'CL':
+                                cursor.execute("UPDATE leave_requests SET status = %s, approved_by = %s WHERE id = %s", (status, approver_info, req_id))
+                                conn.commit()
+                            elif l_type == 'CL' and current_cl >= total_days:
                                 cursor.execute("UPDATE users SET cl_balance = cl_balance - %s WHERE user_id = %s", (total_days, u_id))
-                
-                cursor.execute("UPDATE leave_requests SET status = %s WHERE id = %s", (status, req_id))
-                conn.commit()
+                                cursor.execute("UPDATE leave_requests SET status = %s, approved_by = %s WHERE id = %s", (status, approver_info, req_id))
+                                conn.commit()
+                elif status == 'Rejected':
+                    cursor.execute("UPDATE leave_requests SET status = %s, approved_by = %s WHERE id = %s", (status, approver_info, req_id))
+                    conn.commit()
 
         cursor.close()
         conn.close()
