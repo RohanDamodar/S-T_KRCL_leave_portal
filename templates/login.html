@@ -24,22 +24,36 @@
         /* Top Header Bar */
         .krcl-header {
             background-color: #ffffff;
-            padding: 12px 30px;
+            padding: 10px 25px;
             display: flex;
             align-items: center;
             border-bottom: 2px solid #0056b3;
             box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
 
-        .logo-container {
+        .logo-section {
             display: flex;
             align-items: center;
+            gap: 15px;
         }
 
-        /* SVG Direct Vector Logo (100% Guaranteed Display) */
-        .krcl-svg-logo {
-            height: 85px;
-            width: auto;
+        /* KRCL Vector Emblem Logo (Big Size) */
+        .krcl-emblem-svg {
+            height: 75px;
+            width: 75px;
+        }
+
+        .company-title h2 {
+            font-size: 20px;
+            color: #1a2b4c;
+            font-weight: bold;
+            margin-bottom: 2px;
+        }
+
+        .company-title p {
+            font-size: 12px;
+            color: #444;
+            font-weight: 600;
         }
 
         /* Portal Name Strip */
@@ -56,10 +70,10 @@
             font-weight: bold;
         }
 
-        /* Main Section with Konkan Railway Bridge Scenic Background */
+        /* Main Section with Konkan Railway River Bridge Background */
         .main-content {
             flex: 1;
-            background: linear-gradient(rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.2)), 
+            background: linear-gradient(rgba(0, 0, 0, 0.15), rgba(0, 0, 0, 0.15)), 
                         url('https://images.unsplash.com/photo-1541872703-74c5e44368f9?q=80&w=1600') no-repeat center center;
             background-size: cover;
             display: flex;
@@ -68,15 +82,15 @@
             padding: 40px 20px;
         }
 
-        /* Login Floating Card */
+        /* Login Card */
         .login-card {
-            background: rgba(255, 255, 255, 0.92);
+            background: rgba(255, 255, 255, 0.94);
             padding: 30px 35px;
             border-radius: 8px;
             width: 100%;
             max-width: 420px;
             box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
-            backdrop-filter: blur(5px);
+            backdrop-filter: blur(4px);
         }
 
         .login-card h3 {
@@ -113,7 +127,7 @@
             border-radius: 4px;
             font-size: 14px;
             outline: none;
-            background-color: #fff;
+            background: #fff;
         }
 
         .input-box input:focus {
@@ -171,7 +185,7 @@
             border-top: 1px solid #d0dbe8;
         }
 
-        /* Forgot Password Modal Box */
+        /* Modal Box */
         .modal {
             display: none;
             position: fixed;
@@ -201,22 +215,31 @@
 </head>
 <body>
 
-    <!-- Header Section (KRCL Emblem Logo Vector) -->
+    <!-- Header Section with Official Round Emblem Logo -->
     <header class="krcl-header">
-        <div class="logo-container">
-            <svg class="krcl-svg-logo" viewBox="0 0 320 80" xmlns="http://www.w3.org/2000/svg">
-                <!-- Circular KR Emblem -->
-                <circle cx="40" cy="40" r="35" fill="#003366" stroke="#DAA520" stroke-width="3"/>
-                <circle cx="40" cy="40" r="28" fill="none" stroke="#FFFFFF" stroke-width="2"/>
-                <text x="40" y="32" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#DAA520" text-anchor="middle">कोंकण रेल</text>
-                <text x="40" y="52" font-family="Arial, sans-serif" font-size="22" font-weight="900" fill="#FFFFFF" text-anchor="middle">KR</text>
-                <path d="M18 58 Q40 64 62 58" fill="none" stroke="#DAA520" stroke-width="2"/>
-                <text x="40" y="68" font-family="Arial, sans-serif" font-size="8" font-weight="bold" fill="#FFFFFF" text-anchor="middle">सादर सेवा</text>
-
-                <!-- Text Header -->
-                <text x="90" y="35" font-family="Arial, sans-serif" font-size="18" font-weight="bold" fill="#003366">कोंकण रेलवे कॉर्पोरेशन लिमिटेड</text>
-                <text x="90" y="55" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#555555">(भारत सरकार का उपक्रम) / Konkan Railway Corp. Ltd.</text>
+        <div class="logo-section">
+            <!-- Official KR Round Emblem Vector SVG -->
+            <svg class="krcl-emblem-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                <!-- Outer Blue Circle -->
+                <circle cx="50" cy="50" r="46" fill="#032B69" stroke="#DAA520" stroke-width="3"/>
+                <!-- Inner White Ring -->
+                <circle cx="50" cy="50" r="38" fill="none" stroke="#FFFFFF" stroke-width="2"/>
+                <!-- Top Text -->
+                <path id="textArcTop" d="M 18 50 A 32 32 0 0 1 82 50" fill="none"/>
+                <text font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="#DAA520" text-anchor="middle">
+                    <textPath href="#textArcTop" startOffset="50%">कोंकण रेल</textPath>
+                </text>
+                <!-- Center Bold KR Text -->
+                <text x="50" y="58" font-family="Arial, sans-serif" font-size="30" font-weight="900" fill="#FFFFFF" text-anchor="middle">KR</text>
+                <!-- Bottom Curved Line & Text -->
+                <path d="M22 68 Q50 78 78 68" fill="none" stroke="#DAA520" stroke-width="2"/>
+                <text x="50" y="82" font-family="Arial, sans-serif" font-size="9" font-weight="bold" fill="#FFFFFF" text-anchor="middle">सादर सेवा</text>
             </svg>
+
+            <div class="company-title">
+                <h2>कोंकण रेलवे कॉर्पोरेशन लिमिटेड</h2>
+                <p>(भारत सरकार का उपक्रम) / Konkan Railway Corporation Limited (A Govt. Of India Undertaking)</p>
+            </div>
         </div>
     </header>
 
@@ -225,7 +248,7 @@
         <h1>लीव्ह वेब पोर्टल / Leave Web Portal</h1>
     </div>
 
-    <!-- Main Content Background -->
+    <!-- Background Section with Login Box -->
     <main class="main-content">
         <div class="login-card">
             <h3>Login to Portal</h3>
@@ -273,7 +296,7 @@
         </div>
     </div>
 
-    <!-- Footer Bar -->
+    <!-- Footer -->
     <footer class="krcl-footer">
         © Konkan Railway Corporation Ltd. (A Government of India Undertaking). All rights reserved.
     </footer>
