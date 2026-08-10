@@ -1,12 +1,11 @@
 import os
 import psycopg2
-from datetime import datetime, date
+from datetime import datetime
 from flask import Flask, render_template, request, redirect, url_for, session
 
 app = Flask(__name__)
 app.secret_key = 'super_secret_key'
 
-# Database Connection Helper
 def get_db_connection():
     db_url = os.environ.get('DATABASE_URL')
     if db_url and db_url.startswith("postgres://"):
@@ -18,7 +17,6 @@ def get_db_connection():
     conn = psycopg2.connect(db_url)
     return conn
 
-# Database Init with joining_date column & auto-migration
 def init_db():
     conn = get_db_connection()
     cursor = conn.cursor()
@@ -31,10 +29,10 @@ def init_db():
             role VARCHAR(20) NOT NULL,
             assigned_admin VARCHAR(50),
             joining_date VARCHAR(20),
-            last_el_credit VARCHAR(20),
-            last_cl_credit VARCHAR(20),
             el_balance INT DEFAULT 0,
-            cl_balance INT DEFAULT 0
+            cl_balance INT DEFAULT 0,
+            last_el_update INT DEFAULT 0,
+            last_cl_update INT DEFAULT 0
         );
     ''')
     
@@ -50,11 +48,11 @@ def init_db():
         );
     ''')
     
-    # Auto-Migration for missing columns
+    # Missing columns auto-add Migration
     try:
         cursor.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS joining_date VARCHAR(20);")
-        cursor.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS last_el_credit VARCHAR(20);")
-        cursor.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS last_cl_credit VARCHAR(20);")
+        cursor.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS last_el_update INT DEFAULT 0;")
+        cursor.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS last_cl_update INT DEFAULT 0;")
     except Exception as e:
         conn.rollback()
 
@@ -73,45 +71,36 @@ try:
 except Exception as e:
     print(f"Database setup error: {e}")
 
-# Function: Auto Credit EL & CL based on Joining Date
-def auto_credit_leaves(user_id):
+# ऑटोमॅटिक रजा अपडेट (Auto Add EL & Auto Reset CL) करणारा फंक्शन
+def update_leave_balances():
     conn = get_db_connection()
     cursor = conn.cursor()
     
-    cursor.execute("SELECT joining_date, last_el_credit, last_cl_credit, el_balance, cl_balance FROM users WHERE user_id = %s", (user_id,))
-    user = cursor.fetchone()
+    today = datetime.now()
+    current_year = today.year
+    current_month = today.month
     
-    if user and user[0]:
-        joining_date_str = user[0]
-        last_el_str = user[1] or joining_date_str
-        last_cl_str = user[2] or joining_date_str
+    # ६ महिन्यांचा काळ (1 = Jan-Jun, 2 = Jul-Dec)
+    current_half = 1 if current_month <= 6 else 2
+    half_key = int(f"{current_year}{current_half}") # उदा: 20261 किंवा 20262
+    
+    cursor.execute("SELECT user_id, el_balance, cl_balance, last_el_update, last_cl_update FROM users WHERE role = 'employee'")
+    employees = cursor.fetchall()
+    
+    for emp in employees:
+        u_id, el, cl, last_el, last_cl = emp
         
-        j_dt = datetime.strptime(joining_date_str, "%Y-%m-%d").date()
-        last_el_dt = datetime.strptime(last_el_str, "%Y-%m-%d").date()
-        last_cl_dt = datetime.strptime(last_cl_str, "%Y-%m-%d").date()
-        
-        today = date.today()
-        
-        # 1. EL Auto-Credit Check (दर 6 महिन्यांनी 15 EL) - मोजणी: १८२ दिवस (~६ महिने)
-        days_since_last_el = (today - last_el_dt).days
-        el_periods = days_since_last_el // 182  # प्रत्येक 6 महिन्यांचा ब्लॉक
-        
-        if el_periods >= 1:
-            add_el = el_periods * 15
-            cursor.execute("UPDATE users SET el_balance = el_balance + %s, last_el_credit = %s WHERE user_id = %s",
-                           (add_el, today.strftime("%Y-%m-%d"), user_id))
-
-        # 2. CL Auto-Credit Check (दर 1 वर्षाने 8 CL) - मोजणी: ३६५ दिवस (१ वर्ष)
-        days_since_last_cl = (today - last_cl_dt).days
-        cl_periods = days_since_last_cl // 365  # प्रत्येक १ वर्षाचा ब्लॉक
-        
-        if cl_periods >= 1:
-            add_cl = cl_periods * 8
-            cursor.execute("UPDATE users SET cl_balance = cl_balance + %s, last_cl_credit = %s WHERE user_id = %s",
-                           (add_cl, today.strftime("%Y-%m-%d"), user_id))
-
-        conn.commit()
-        
+        # १. EL Auto-Add (दर ६ महिन्यांनी १५ EL जमा होणे - Remaining EL शिल्लक राहतील)
+        if last_el < half_key:
+            new_el = el + 15
+            cursor.execute("UPDATE users SET el_balance = %s, last_el_update = %s WHERE user_id = %s", (new_el, half_key, u_id))
+            
+        # २. CL Auto Reset (दरवर्षी १ जानेवारीला जुन्या CL लॅप्स होऊन नवीन ८ CL मिळणे)
+        if last_cl < current_year:
+            new_cl = 8  # जुन्या CL लॅप्स होऊन रिसेट ८ वर होतात
+            cursor.execute("UPDATE users SET cl_balance = %s, last_cl_update = %s WHERE user_id = %s", (new_cl, current_year, u_id))
+            
+    conn.commit()
     cursor.close()
     conn.close()
 
@@ -121,6 +110,9 @@ def login():
     if request.method == 'POST':
         user_id = request.form['user_id']
         password = request.form['password']
+        
+        # लॉगिनच्या वेळी आपोआप रजा अपडेट तपासली जाईल
+        update_leave_balances()
         
         conn = get_db_connection()
         cursor = conn.cursor()
@@ -133,9 +125,6 @@ def login():
             session['user_id'] = user[0]
             session['name'] = user[2]
             session['role'] = user[3]
-            
-            # Auto credit check upon login
-            auto_credit_leaves(user[0])
             
             if user[3] == 'admin':
                 return redirect(url_for('admin_dashboard'))
@@ -152,8 +141,7 @@ def user_dashboard():
     if 'user_id' not in session or session['role'] != 'employee':
         return redirect(url_for('login'))
     
-    auto_credit_leaves(session['user_id'])
-    
+    update_leave_balances()
     conn = get_db_connection()
     cursor = conn.cursor()
     
@@ -169,7 +157,7 @@ def user_dashboard():
         )
         conn.commit()
     
-    cursor.execute("SELECT el_balance, cl_balance, joining_date FROM users WHERE user_id = %s", (session['user_id'],))
+    cursor.execute("SELECT el_balance, cl_balance FROM users WHERE user_id = %s", (session['user_id'],))
     balances = cursor.fetchone()
     
     cursor.execute("SELECT id, leave_type, start_date, end_date, reason, status FROM leave_requests WHERE user_id = %s ORDER BY id DESC", (session['user_id'],))
@@ -228,6 +216,7 @@ def admin_dashboard():
     if 'user_id' not in session or session['role'] != 'admin':
         return redirect(url_for('login'))
         
+    update_leave_balances()
     conn = get_db_connection()
     cursor = conn.cursor()
     
@@ -240,13 +229,20 @@ def admin_dashboard():
             name = request.form['name']
             joining_date = request.form['joining_date']
             assigned_admin = request.form['assigned_admin']
-            el = int(request.form['el'])
-            cl = int(request.form['cl'])
+            
+            # सुरुवातीला १५ EL आणि ८ CL मिळतील
+            el = 15
+            cl = 8
+            
+            # करंट पिरियड मार्क करणे
+            today = datetime.now()
+            half = 1 if today.month <= 6 else 2
+            half_key = int(f"{today.year}{half}")
             
             try:
                 cursor.execute(
-                    "INSERT INTO users (user_id, password, name, role, assigned_admin, joining_date, last_el_credit, last_cl_credit, el_balance, cl_balance) VALUES (%s, %s, %s, 'employee', %s, %s, %s, %s, %s, %s)",
-                    (u_id, pwd, name, assigned_admin, joining_date, joining_date, joining_date, el, cl)
+                    "INSERT INTO users (user_id, password, name, role, assigned_admin, joining_date, el_balance, cl_balance, last_el_update, last_cl_update) VALUES (%s, %s, %s, 'employee', %s, %s, %s, %s, %s, %s)",
+                    (u_id, pwd, name, assigned_admin, joining_date, el, cl, half_key, today.year)
                 )
                 conn.commit()
             except Exception as err:
@@ -259,7 +255,7 @@ def admin_dashboard():
             
             try:
                 cursor.execute(
-                    "INSERT INTO users (user_id, password, name, role, assigned_admin, joining_date, el_balance, cl_balance) VALUES (%s, %s, %s, 'admin', '', '2020-01-01', 0, 0)",
+                    "INSERT INTO users (user_id, password, name, role, assigned_admin, joining_date) VALUES (%s, %s, %s, 'admin', '', '')",
                     (u_id, pwd, name)
                 )
                 conn.commit()
