@@ -1,6 +1,6 @@
 import os
 import psycopg2
-from datetime import datetime
+from datetime import datetime, date
 from flask import Flask, render_template, request, redirect, url_for, session
 
 app = Flask(__name__)
@@ -18,7 +18,7 @@ def get_db_connection():
     conn = psycopg2.connect(db_url)
     return conn
 
-# Database Init
+# Database Init with joining_date column & auto-migration
 def init_db():
     conn = get_db_connection()
     cursor = conn.cursor()
@@ -30,6 +30,9 @@ def init_db():
             name VARCHAR(100) NOT NULL,
             role VARCHAR(20) NOT NULL,
             assigned_admin VARCHAR(50),
+            joining_date VARCHAR(20),
+            last_el_credit VARCHAR(20),
+            last_cl_credit VARCHAR(20),
             el_balance INT DEFAULT 0,
             cl_balance INT DEFAULT 0
         );
@@ -47,9 +50,17 @@ def init_db():
         );
     ''')
     
+    # Auto-Migration for missing columns
+    try:
+        cursor.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS joining_date VARCHAR(20);")
+        cursor.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS last_el_credit VARCHAR(20);")
+        cursor.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS last_cl_credit VARCHAR(20);")
+    except Exception as e:
+        conn.rollback()
+
     cursor.execute('''
-        INSERT INTO users (user_id, password, name, role, assigned_admin) 
-        VALUES ('ADMIN1', 'admin123', 'Main Admin', 'admin', '') 
+        INSERT INTO users (user_id, password, name, role, assigned_admin, joining_date) 
+        VALUES ('ADMIN1', 'admin123', 'Main Admin', 'admin', '', '2020-01-01') 
         ON CONFLICT (user_id) DO NOTHING;
     ''')
     
@@ -61,6 +72,48 @@ try:
     init_db()
 except Exception as e:
     print(f"Database setup error: {e}")
+
+# Function: Auto Credit EL & CL based on Joining Date
+def auto_credit_leaves(user_id):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    cursor.execute("SELECT joining_date, last_el_credit, last_cl_credit, el_balance, cl_balance FROM users WHERE user_id = %s", (user_id,))
+    user = cursor.fetchone()
+    
+    if user and user[0]:
+        joining_date_str = user[0]
+        last_el_str = user[1] or joining_date_str
+        last_cl_str = user[2] or joining_date_str
+        
+        j_dt = datetime.strptime(joining_date_str, "%Y-%m-%d").date()
+        last_el_dt = datetime.strptime(last_el_str, "%Y-%m-%d").date()
+        last_cl_dt = datetime.strptime(last_cl_str, "%Y-%m-%d").date()
+        
+        today = date.today()
+        
+        # 1. EL Auto-Credit Check (दर 6 महिन्यांनी 15 EL) - मोजणी: १८२ दिवस (~६ महिने)
+        days_since_last_el = (today - last_el_dt).days
+        el_periods = days_since_last_el // 182  # प्रत्येक 6 महिन्यांचा ब्लॉक
+        
+        if el_periods >= 1:
+            add_el = el_periods * 15
+            cursor.execute("UPDATE users SET el_balance = el_balance + %s, last_el_credit = %s WHERE user_id = %s",
+                           (add_el, today.strftime("%Y-%m-%d"), user_id))
+
+        # 2. CL Auto-Credit Check (दर 1 वर्षाने 8 CL) - मोजणी: ३६५ दिवस (१ वर्ष)
+        days_since_last_cl = (today - last_cl_dt).days
+        cl_periods = days_since_last_cl // 365  # प्रत्येक १ वर्षाचा ब्लॉक
+        
+        if cl_periods >= 1:
+            add_cl = cl_periods * 8
+            cursor.execute("UPDATE users SET cl_balance = cl_balance + %s, last_cl_credit = %s WHERE user_id = %s",
+                           (add_cl, today.strftime("%Y-%m-%d"), user_id))
+
+        conn.commit()
+        
+    cursor.close()
+    conn.close()
 
 # Login Route
 @app.route('/', methods=['GET', 'POST'])
@@ -81,6 +134,9 @@ def login():
             session['name'] = user[2]
             session['role'] = user[3]
             
+            # Auto credit check upon login
+            auto_credit_leaves(user[0])
+            
             if user[3] == 'admin':
                 return redirect(url_for('admin_dashboard'))
             else:
@@ -95,6 +151,8 @@ def login():
 def user_dashboard():
     if 'user_id' not in session or session['role'] != 'employee':
         return redirect(url_for('login'))
+    
+    auto_credit_leaves(session['user_id'])
     
     conn = get_db_connection()
     cursor = conn.cursor()
@@ -111,7 +169,7 @@ def user_dashboard():
         )
         conn.commit()
     
-    cursor.execute("SELECT el_balance, cl_balance FROM users WHERE user_id = %s", (session['user_id'],))
+    cursor.execute("SELECT el_balance, cl_balance, joining_date FROM users WHERE user_id = %s", (session['user_id'],))
     balances = cursor.fetchone()
     
     cursor.execute("SELECT id, leave_type, start_date, end_date, reason, status FROM leave_requests WHERE user_id = %s ORDER BY id DESC", (session['user_id'],))
@@ -180,14 +238,15 @@ def admin_dashboard():
             u_id = request.form['user_id']
             pwd = request.form['password']
             name = request.form['name']
+            joining_date = request.form['joining_date']
             assigned_admin = request.form['assigned_admin']
             el = int(request.form['el'])
             cl = int(request.form['cl'])
             
             try:
                 cursor.execute(
-                    "INSERT INTO users (user_id, password, name, role, assigned_admin, el_balance, cl_balance) VALUES (%s, %s, %s, 'employee', %s, %s, %s)",
-                    (u_id, pwd, name, assigned_admin, el, cl)
+                    "INSERT INTO users (user_id, password, name, role, assigned_admin, joining_date, last_el_credit, last_cl_credit, el_balance, cl_balance) VALUES (%s, %s, %s, 'employee', %s, %s, %s, %s, %s, %s)",
+                    (u_id, pwd, name, assigned_admin, joining_date, joining_date, joining_date, el, cl)
                 )
                 conn.commit()
             except Exception as err:
@@ -200,7 +259,7 @@ def admin_dashboard():
             
             try:
                 cursor.execute(
-                    "INSERT INTO users (user_id, password, name, role, assigned_admin, el_balance, cl_balance) VALUES (%s, %s, %s, 'admin', '', 0, 0)",
+                    "INSERT INTO users (user_id, password, name, role, assigned_admin, joining_date, el_balance, cl_balance) VALUES (%s, %s, %s, 'admin', '', '2020-01-01', 0, 0)",
                     (u_id, pwd, name)
                 )
                 conn.commit()
@@ -217,7 +276,7 @@ def admin_dashboard():
     ''')
     requests = cursor.fetchall()
     
-    cursor.execute("SELECT user_id, name, assigned_admin, el_balance, cl_balance FROM users WHERE role = 'employee'")
+    cursor.execute("SELECT user_id, name, joining_date, assigned_admin, el_balance, cl_balance FROM users WHERE role = 'employee'")
     users_list = cursor.fetchall()
     
     cursor.execute("SELECT user_id, name FROM users WHERE role = 'admin'")
