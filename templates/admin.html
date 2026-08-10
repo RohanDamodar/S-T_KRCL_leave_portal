@@ -57,8 +57,13 @@
         .btn-action-approve { background-color: #10b981; color: white; padding: 5px 10px; border-radius: 4px; text-decoration: none; font-weight: bold; font-size: 12px; margin-right: 5px; }
         .btn-action-reject { background-color: #ef4444; color: white; padding: 5px 10px; border-radius: 4px; text-decoration: none; font-weight: bold; font-size: 12px; margin-right: 5px; }
         .btn-action-cancel { color: #dc2626; border: 1px solid #fca5a5; background-color: #fef2f2; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; text-decoration: none; }
+        .btn-edit-user { color: #0056b3; background: #e8eef7; border: 1px solid #cbd5e1; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; text-decoration: none; margin-right: 5px; cursor: pointer; }
         .btn-delete-user { color: #dc2626; background: #fee2e2; border: 1px solid #fca5a5; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; text-decoration: none; }
-        .btn-delete-user:hover { background: #dc2626; color: white; }
+        
+        /* Modal Popup */
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; }
+        .modal-content { background: white; padding: 25px; border-radius: 8px; width: 400px; max-width: 90%; }
+        
         .footer { margin-top: auto; background-color: #e8eef7; text-align: center; padding: 12px; font-size: 12px; color: #555; border-top: 1px solid #d0dbe8; }
     </style>
 </head>
@@ -77,14 +82,14 @@
             <div class="user-info">
                 <i class="fa-solid fa-user-gear fa-lg" style="color: #0056b3;"></i>
                 <span>{{ session['name'] }}</span>
-                <span class="admin-badge">Admin</span>
+                <span class="admin-badge">SSC Admin</span>
             </div>
             <a href="/logout" class="btn-logout"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
         </div>
     </header>
 
     <div class="container">
-        <h2 class="page-title">S&T Portal - Admin Control Center</h2>
+        <h2 class="page-title">S&T Portal - SSC Admin Control Center</h2>
 
         <div class="forms-grid">
             <!-- Add Employee Form -->
@@ -95,42 +100,35 @@
                     <div class="form-group"><label>User ID / Employee ID *</label><input type="text" name="user_id" placeholder="e.g. 101" required></div>
                     <div class="form-group"><label>Password *</label><input type="password" name="password" placeholder="Set Password" required></div>
                     <div class="form-group"><label>Employee Name *</label><input type="text" name="name" placeholder="Full Name" required></div>
-                    <div class="form-group"><label>Designation / पद *</label><input type="text" name="designation" placeholder="e.g. Technician-3, SSE, JE" required></div>
-                    <div class="form-group"><label>Joining Date *</label><input type="date" name="joining_date" required></div>
+                    <div class="form-group"><label>Designation / पद *</label><input type="text" name="designation" placeholder="e.g. Tech - Signal, JE/TELE" required></div>
+                    <div class="form-group"><label>Joining Date (Optional)</label><input type="date" name="joining_date"></div>
                     
                     <div class="form-group">
-                        <label>Approving Admins (Select Multiple) *</label>
+                        <label>Approving SSC Admins *</label>
                         <div class="checkbox-group">
                             {% for a in admins_list %}
                                 <label class="checkbox-item">
-                                    <input type="checkbox" name="assigned_admins" value="{{ a['user_id'] }}" checked>
+                                    <input type="checkbox" name="assigned_admins" value="{{ a['user_id'] }}" {% if a['user_id'] == current_admin %}checked{% endif %}>
                                     {{ a['name'] }} ({{ a['user_id'] }})
                                 </label>
                             {% endfor %}
                         </div>
                     </div>
 
-                    <div class="form-group">
-                        <label>Current Remaining Balances (Optional):</label>
-                        <div class="balance-inputs">
-                            <input type="number" name="el" placeholder="Remaining EL (eg: 10)">
-                            <input type="number" name="cl" placeholder="Remaining CL (eg: 5)">
-                        </div>
-                    </div>
                     <button type="submit" class="btn-submit-emp"><i class="fa-solid fa-check-circle"></i> Add Employee</button>
                 </form>
             </div>
 
             <!-- Add Admin Form -->
             <div class="card">
-                <div class="card-header"><i class="fa-solid fa-user-shield"></i> Add New Admin</div>
+                <div class="card-header"><i class="fa-solid fa-user-shield"></i> Add New SSC Admin</div>
                 <form method="POST">
                     <input type="hidden" name="action_type" value="add_admin">
-                    <div class="form-group"><label>Admin User ID *</label><input type="text" name="user_id" placeholder="e.g. ADMIN2" required></div>
+                    <div class="form-group"><label>Admin User ID *</label><input type="text" name="user_id" placeholder="e.g. ADMIN_SIGNAL2" required></div>
                     <div class="form-group"><label>Admin Password *</label><input type="password" name="password" placeholder="Set Admin Password" required></div>
                     <div class="form-group"><label>Admin Name *</label><input type="text" name="name" placeholder="Full Name" required></div>
-                    <div class="form-group"><label>Admin Designation *</label><input type="text" name="designation" placeholder="e.g. SSE (S&T), ASTE" value="S&T Admin"></div>
-                    <button type="submit" class="btn-submit-admin" style="margin-top: 105px;"><i class="fa-solid fa-plus-circle"></i> Add Admin</button>
+                    <div class="form-group"><label>Admin Designation *</label><input type="text" name="designation" placeholder="e.g. SSC (Signal)" value="SSC Admin"></div>
+                    <button type="submit" class="btn-submit-admin" style="margin-top: 100px;"><i class="fa-solid fa-plus-circle"></i> Add Admin</button>
                 </form>
             </div>
         </div>
@@ -146,7 +144,7 @@
                             <th>Employee Name</th>
                             <th>Designation</th>
                             <th>Joining Date</th>
-                            <th>Approving Admins</th>
+                            <th>Approving SSC Admins</th>
                             <th>EL Balance</th>
                             <th>CL Balance</th>
                             <th>Action</th>
@@ -159,11 +157,12 @@
                                 <td><b>{{ u['user_id'] }}</b></td>
                                 <td>{{ u['name'] }}</td>
                                 <td><span style="color: #0056b3; font-weight: bold;">{{ u['designation'] if u['designation'] else '-' }}</span></td>
-                                <td>{{ u['joining_date'] if u['joining_date'] else '-' }}</td>
+                                <td>{{ u['joining_date'] if u['joining_date'] else 'Not Set' }}</td>
                                 <td>{{ u['assigned_admin'] }}</td>
                                 <td><b style="color: #0056b3;">{{ u['el_balance'] }}</b></td>
                                 <td><b style="color: #10b981;">{{ u['cl_balance'] }}</b></td>
                                 <td>
+                                    <button class="btn-edit-user" onclick="openEditModal('{{ u['user_id'] }}', '{{ u['name'] }}', '{{ u['designation'] }}', '{{ u['joining_date'] }}')"><i class="fa-solid fa-pen"></i> Edit</button>
                                     <a href="/delete_user/{{ u['user_id'] }}" class="btn-delete-user" onclick="return confirm('कर्मचाऱ्याचा अकाऊंट डिलीट करायचा का?');"><i class="fa-solid fa-user-xmark"></i> Delete</a>
                                 </td>
                             </tr>
@@ -233,7 +232,7 @@
                                     {% endif %}
                                 </td>
                                 <td>
-                                    {% if current_admin in req['assigned_admin'].split(',') or current_admin == 'ADMIN1' %}
+                                    {% if current_admin in req['assigned_admin'].split(',') or current_admin == 'ADMIN_SIGNAL' or current_admin == 'ADMIN_TELE' %}
                                         {% if req['status'] == 'Pending' %}
                                             <a href="/action/{{ req['id'] }}/Approved" class="btn-action-approve"><i class="fa-solid fa-check"></i> Approve</a>
                                             <a href="/action/{{ req['id'] }}/Rejected" class="btn-action-reject"><i class="fa-solid fa-xmark"></i> Reject</a>
@@ -257,9 +256,58 @@
         </div>
     </div>
 
+    <!-- Edit Employee Modal -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <h3 style="color: #032B69; margin-bottom: 15px;"><i class="fa-solid fa-user-pen"></i> Edit Employee Details</h3>
+            <form action="/edit_user" method="POST">
+                <input type="hidden" name="user_id" id="edit_user_id">
+                <div class="form-group">
+                    <label>Employee Name</label>
+                    <input type="text" name="name" id="edit_name" required>
+                </div>
+                <div class="form-group">
+                    <label>Designation</label>
+                    <input type="text" name="designation" id="edit_designation" required>
+                </div>
+                <div class="form-group">
+                    <label>Joining Date</label>
+                    <input type="date" name="joining_date" id="edit_joining_date">
+                </div>
+                <div class="form-group">
+                    <label>Assigned SSC Admins</label>
+                    <div class="checkbox-group">
+                        {% for a in admins_list %}
+                            <label class="checkbox-item">
+                                <input type="checkbox" name="assigned_admins" value="{{ a['user_id'] }}">
+                                {{ a['name'] }} ({{ a['user_id'] }})
+                            </label>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div style="display: flex; gap: 10px; margin-top: 15px;">
+                    <button type="submit" class="btn-submit-emp" style="margin-top: 0;">Save Changes</button>
+                    <button type="button" class="btn-logout" onclick="closeEditModal()" style="background: #64748b;">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <footer class="footer">
         © Konkan Railway Corporation Ltd. (A Government of India Undertaking). All rights reserved.
     </footer>
 
+    <script>
+        function openEditModal(userId, name, desig, joiningDate) {
+            document.getElementById('edit_user_id').value = userId;
+            document.getElementById('edit_name').value = name;
+            document.getElementById('edit_designation').value = desig;
+            document.getElementById('edit_joining_date').value = joiningDate !== 'Not Set' ? joiningDate : '';
+            document.getElementById('editModal').style.display = 'flex';
+        }
+        function closeEditModal() {
+            document.getElementById('editModal').style.display = 'none';
+        }
+    </script>
 </body>
 </html>
