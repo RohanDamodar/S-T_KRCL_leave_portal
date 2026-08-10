@@ -40,18 +40,19 @@ def init_db():
         CREATE TABLE IF NOT EXISTS leave_requests (
             id SERIAL PRIMARY KEY,
             user_id VARCHAR(50) NOT NULL,
-            leave_type VARCHAR(20) NOT NULL,
+            leave_type VARCHAR(50) NOT NULL,
             start_date VARCHAR(20) NOT NULL,
             end_date VARCHAR(20) NOT NULL,
+            el_dates VARCHAR(50) DEFAULT '',
+            cl_dates VARCHAR(50) DEFAULT '',
             reason TEXT NOT NULL,
             status VARCHAR(20) DEFAULT 'Pending'
         );
     ''')
     
     try:
-        cursor.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS joining_date VARCHAR(20);")
-        cursor.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS last_el_update INT DEFAULT 0;")
-        cursor.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS last_cl_update INT DEFAULT 0;")
+        cursor.execute("ALTER TABLE leave_requests ADD COLUMN IF NOT EXISTS el_dates VARCHAR(50) DEFAULT '';")
+        cursor.execute("ALTER TABLE leave_requests ADD COLUMN IF NOT EXISTS cl_dates VARCHAR(50) DEFAULT '';")
     except Exception as e:
         conn.rollback()
 
@@ -141,20 +142,34 @@ def user_dashboard():
     
     if request.method == 'POST':
         leave_type = request.form['leave_type']
-        start_date = request.form['start_date']
-        end_date = request.form['end_date']
         reason = request.form['reason']
         
+        if leave_type == 'EL+CL':
+            el_start = request.form['el_start_date']
+            el_end = request.form['el_end_date']
+            cl_start = request.form['cl_start_date']
+            cl_end = request.form['cl_end_date']
+            
+            start_date = min(el_start, cl_start)
+            end_date = max(el_end, cl_end)
+            el_dates = f"{el_start} to {el_end}"
+            cl_dates = f"{cl_start} to {cl_end}"
+        else:
+            start_date = request.form['start_date']
+            end_date = request.form['end_date']
+            el_dates = f"{start_date} to {end_date}" if leave_type == 'EL' else ""
+            cl_dates = f"{start_date} to {end_date}" if leave_type == 'CL' else ""
+        
         cursor.execute(
-            "INSERT INTO leave_requests (user_id, leave_type, start_date, end_date, reason) VALUES (%s, %s, %s, %s, %s)",
-            (session['user_id'], leave_type, start_date, end_date, reason)
+            "INSERT INTO leave_requests (user_id, leave_type, start_date, end_date, el_dates, cl_dates, reason) VALUES (%s, %s, %s, %s, %s, %s, %s)",
+            (session['user_id'], leave_type, start_date, end_date, el_dates, cl_dates, reason)
         )
         conn.commit()
     
     cursor.execute("SELECT el_balance, cl_balance FROM users WHERE user_id = %s", (session['user_id'],))
     balances = cursor.fetchone()
     
-    cursor.execute("SELECT id, leave_type, start_date, end_date, reason, status FROM leave_requests WHERE user_id = %s ORDER BY id DESC", (session['user_id'],))
+    cursor.execute("SELECT id, leave_type, start_date, end_date, el_dates, cl_dates, reason, status FROM leave_requests WHERE user_id = %s ORDER BY id DESC", (session['user_id'],))
     requests = cursor.fetchall()
     
     cursor.close()
@@ -169,13 +184,13 @@ def cancel_leave(req_id):
         cursor = conn.cursor()
         
         cursor.execute('''
-            SELECT leave_requests.user_id, leave_requests.leave_type, leave_requests.start_date, leave_requests.end_date, leave_requests.status 
+            SELECT user_id, leave_type, start_date, end_date, el_dates, cl_dates, status 
             FROM leave_requests WHERE id = %s
         ''', (req_id,))
         data = cursor.fetchone()
         
         if data:
-            u_id, l_type, start_date, end_date, status = data
+            u_id, l_type, start_date, end_date, el_dates, cl_dates, status = data
             
             if session['role'] == 'employee' and session['user_id'] != u_id:
                 cursor.close()
@@ -183,11 +198,17 @@ def cancel_leave(req_id):
                 return redirect(url_for('user_dashboard'))
 
             if status == 'Approved':
-                start_dt = datetime.strptime(start_date, "%Y-%m-%d")
-                end_dt = datetime.strptime(end_date, "%Y-%m-%d")
-                total_days = (end_dt - start_dt).days + 1
-                
-                if total_days > 0:
+                if l_type == 'EL+CL':
+                    if el_dates:
+                        s_dt, e_dt = el_dates.split(' to ')
+                        el_days = (datetime.strptime(e_dt, "%Y-%m-%d") - datetime.strptime(s_dt, "%Y-%m-%d")).days + 1
+                        cursor.execute("UPDATE users SET el_balance = el_balance + %s WHERE user_id = %s", (el_days, u_id))
+                    if cl_dates:
+                        s_dt, e_dt = cl_dates.split(' to ')
+                        cl_days = (datetime.strptime(e_dt, "%Y-%m-%d") - datetime.strptime(s_dt, "%Y-%m-%d")).days + 1
+                        cursor.execute("UPDATE users SET cl_balance = cl_balance + %s WHERE user_id = %s", (cl_days, u_id))
+                else:
+                    total_days = (datetime.strptime(end_date, "%Y-%m-%d") - datetime.strptime(start_date, "%Y-%m-%d")).days + 1
                     if l_type == 'EL':
                         cursor.execute("UPDATE users SET el_balance = el_balance + %s WHERE user_id = %s", (total_days, u_id))
                     elif l_type == 'CL':
@@ -222,7 +243,6 @@ def admin_dashboard():
             joining_date = request.form['joining_date']
             assigned_admin = request.form['assigned_admin']
             
-            # मॅन्युअली टाकलेले किंवा डीफॉल्ट (15 EL, 8 CL)
             el_input = request.form.get('el')
             cl_input = request.form.get('cl')
             
@@ -258,8 +278,8 @@ def admin_dashboard():
             
     cursor.execute('''
         SELECT leave_requests.id, leave_requests.user_id, users.name, leave_requests.leave_type, 
-               leave_requests.start_date, leave_requests.end_date, leave_requests.reason, 
-               leave_requests.status, users.assigned_admin 
+               leave_requests.start_date, leave_requests.end_date, leave_requests.el_dates, leave_requests.cl_dates,
+               leave_requests.reason, leave_requests.status, users.assigned_admin 
         FROM leave_requests 
         JOIN users ON leave_requests.user_id = users.user_id
         ORDER BY leave_requests.id DESC
@@ -277,16 +297,13 @@ def admin_dashboard():
     
     return render_template('admin.html', requests=requests, users_list=users_list, admins_list=admins_list, current_admin=session['user_id'])
 
-# Delete Employee Route
 @app.route('/delete_user/<string:user_id>')
 def delete_user(user_id):
     if 'user_id' in session and session['role'] == 'admin':
         conn = get_db_connection()
         cursor = conn.cursor()
         
-        # कर्मचाऱ्याच्या सर्व रजांच्या अर्जांचे रेकॉर्ड काढून टाका
         cursor.execute("DELETE FROM leave_requests WHERE user_id = %s", (user_id,))
-        # कर्मचाऱ्याचा अकाऊंट डिलीट करा
         cursor.execute("DELETE FROM users WHERE user_id = %s AND role = 'employee'", (user_id,))
         
         conn.commit()
@@ -295,7 +312,6 @@ def delete_user(user_id):
         
     return redirect(url_for('admin_dashboard'))
 
-# Approve / Reject Action
 @app.route('/action/<int:req_id>/<string:status>')
 def action(req_id, status):
     if 'user_id' in session and session['role'] == 'admin':
@@ -303,7 +319,8 @@ def action(req_id, status):
         cursor = conn.cursor()
         
         cursor.execute('''
-            SELECT leave_requests.user_id, leave_requests.leave_type, leave_requests.start_date, leave_requests.end_date, leave_requests.status, users.assigned_admin 
+            SELECT leave_requests.user_id, leave_requests.leave_type, leave_requests.start_date, leave_requests.end_date, 
+                   leave_requests.el_dates, leave_requests.cl_dates, leave_requests.status, users.assigned_admin 
             FROM leave_requests 
             JOIN users ON leave_requests.user_id = users.user_id 
             WHERE leave_requests.id = %s
@@ -311,19 +328,26 @@ def action(req_id, status):
         data = cursor.fetchone()
         
         if data:
-            u_id, l_type, start_date, end_date, current_status, assigned_admin = data
+            u_id, l_type, start_date, end_date, el_dates, cl_dates, current_status, assigned_admin = data
             
             if assigned_admin == session['user_id']:
                 if status == 'Approved' and current_status != 'Approved':
-                    start_dt = datetime.strptime(start_date, "%Y-%m-%d")
-                    end_dt = datetime.strptime(end_date, "%Y-%m-%d")
-                    total_days = (end_dt - start_dt).days + 1
-                    
-                    if total_days > 0:
-                        if l_type == 'EL':
-                            cursor.execute("UPDATE users SET el_balance = el_balance - %s WHERE user_id = %s", (total_days, u_id))
-                        elif l_type == 'CL':
-                            cursor.execute("UPDATE users SET cl_balance = cl_balance - %s WHERE user_id = %s", (total_days, u_id))
+                    if l_type == 'EL+CL':
+                        if el_dates:
+                            s_dt, e_dt = el_dates.split(' to ')
+                            el_days = (datetime.strptime(e_dt, "%Y-%m-%d") - datetime.strptime(s_dt, "%Y-%m-%d")).days + 1
+                            cursor.execute("UPDATE users SET el_balance = el_balance - %s WHERE user_id = %s", (el_days, u_id))
+                        if cl_dates:
+                            s_dt, e_dt = cl_dates.split(' to ')
+                            cl_days = (datetime.strptime(e_dt, "%Y-%m-%d") - datetime.strptime(s_dt, "%Y-%m-%d")).days + 1
+                            cursor.execute("UPDATE users SET cl_balance = cl_balance - %s WHERE user_id = %s", (cl_days, u_id))
+                    else:
+                        total_days = (datetime.strptime(end_date, "%Y-%m-%d") - datetime.strptime(start_date, "%Y-%m-%d")).days + 1
+                        if total_days > 0:
+                            if l_type == 'EL':
+                                cursor.execute("UPDATE users SET el_balance = el_balance - %s WHERE user_id = %s", (total_days, u_id))
+                            elif l_type == 'CL':
+                                cursor.execute("UPDATE users SET cl_balance = cl_balance - %s WHERE user_id = %s", (total_days, u_id))
                 
                 cursor.execute("UPDATE leave_requests SET status = %s WHERE id = %s", (status, req_id))
                 conn.commit()
