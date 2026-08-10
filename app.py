@@ -23,8 +23,9 @@ PDF_ADMINS = [
     ('80342', 'MNas@8034', 'Mohammad Nasier Zarger', 'SSE/Store'),
     ('7342', 'NCha@7342', 'Nayan S Chaudhari', 'SSE/Sig/Incharge/SGDN'),
     ('7347', 'MShi@7347', 'Mayur D Shilame', 'SSE/Telecom/Incharge/SGDN'),
-    ('80983', 'VSha@8098', 'Vipul Sharma', 'SSE/SIGNAL'),
-    ('80888', 'NKot@8088', 'Nihal Kotwal', 'SSE/SIGNAL')
+    ('80983', 'VSha@8098', 'Vipul Sharma', 'SSE/SIGNAL/SGDN'),
+    ('80888', 'NKot@8088', 'Nihal Kotwal', 'SSE/SIGNAL/REAI'),
+    ('81366', 'SSha@8136', 'Shubam Sharma', 'JE/TELE', '7347')
 ]
 
 # 2. EMPLOYEES LIST (JE, Tech, Helpers, Clerks)
@@ -41,7 +42,6 @@ PDF_EMPLOYEES = [
     ('81362', 'IHas@8136', 'Ishfaq Hassan', 'JE/TELE', '7347'),
     ('81348', 'ASha@8134', 'Aqib Javed Shah', 'JE/TELE', '7347'),
     ('81356', 'BSin@8135', 'S Baljeet Singh', 'JE/TELE', '7347'),
-    ('81366', 'SSha@8136', 'Shubam Sharma', 'JE/TELE', '7347'),
     ('81309', 'NVas@8130', 'Nikunj Vashisth', 'JE/TELE', '7347'),
 
     # Page 3 & 4: Technicians
