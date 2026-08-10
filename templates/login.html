@@ -24,37 +24,19 @@
         /* Top Header Bar */
         .krcl-header {
             background-color: #ffffff;
-            padding: 12px 30px;
+            padding: 15px 30px;
             display: flex;
             align-items: center;
+            justify-content: flex-start;
             border-bottom: 2px solid #0056b3;
             box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
 
-        .logo-section {
-            display: flex;
-            align-items: center;
-            gap: 20px;
-        }
-
         /* Konkan Railway Big Size Logo */
         .krcl-logo-img {
-            height: 75px;
+            height: 90px;
             width: auto;
             object-fit: contain;
-        }
-
-        .company-title h2 {
-            font-size: 22px;
-            color: #1a2b4c;
-            font-weight: bold;
-            margin-bottom: 4px;
-        }
-
-        .company-title p {
-            font-size: 13px;
-            color: #444;
-            font-weight: 600;
         }
 
         /* Portal Name Strip */
@@ -71,7 +53,7 @@
             font-weight: bold;
         }
 
-        /* Main Section with Konkan Scenic Railway Background */
+        /* Main Section with Scenic Railway Background */
         .main-content {
             flex: 1;
             background: linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.3)), 
@@ -185,26 +167,40 @@
             border-top: 1px solid #d0dbe8;
         }
 
-        .krcl-footer a {
-            color: #0056b3;
-            text-decoration: none;
-            font-weight: bold;
+        /* Forgot Password Modal Box */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 10;
+            left: 0; top: 0;
+            width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 25px;
+            border-radius: 8px;
+            width: 350px;
+            position: relative;
+        }
+
+        .close-btn {
+            position: absolute;
+            right: 15px; top: 10px;
+            font-size: 20px;
+            cursor: pointer;
         }
     </style>
 </head>
 <body>
 
-    <!-- Header Section -->
+    <!-- Header Section with BIG LOGO Only -->
     <header class="krcl-header">
-        <div class="logo-section">
-            <!-- Official KRCL Logo (Reliable High-Res Link) -->
-            <img src="https://upload.wikimedia.org/wikipedia/en/2/23/Konkan_Railway_logo.png" 
-                 alt="Konkan Railway Logo" class="krcl-logo-img">
-            <div class="company-title">
-                <h2>कोंकण रेलवे कॉर्पोरेशन लिमिटेड</h2>
-                <p>(भारत सरकार का उपक्रम) / Konkan Railway Corporation Limited (A Govt. Of India Undertaking)</p>
-            </div>
-        </div>
+        <img src="https://upload.wikimedia.org/wikipedia/en/2/23/Konkan_Railway_logo.png" 
+             alt="Konkan Railway Logo" class="krcl-logo-img">
     </header>
 
     <!-- Portal Strip -->
@@ -236,14 +232,33 @@
 
                 <button type="submit" class="btn-submit">Sign-In</button>
 
-                <a class="forgot-link" onclick="alert('कृपया पासवर्डसाठी आपल्या S&T Admin शी संपर्क साधा.');">Forgot Password? Click Here..</a>
+                <a class="forgot-link" onclick="openForgotModal()">Forgot Password? Click Here..</a>
             </form>
         </div>
     </main>
 
+    <!-- Forgot Password Modal -->
+    <div id="forgotModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeForgotModal()">&times;</span>
+            <h3 style="margin-bottom: 15px; color: #1a2b4c;">Get Password via Text SMS</h3>
+            <form method="POST" action="/forgot_password">
+                <div class="form-group">
+                    <label>User ID / Employee ID</label>
+                    <input type="text" name="user_id" placeholder="Enter User ID" required style="width:100%; padding:8px; margin-top:5px;">
+                </div>
+                <div class="form-group">
+                    <label>Registered Mobile No</label>
+                    <input type="tel" name="mobile_no" placeholder="Enter 10 digit Mobile No" pattern="[0-9]{10}" required style="width:100%; padding:8px; margin-top:5px;">
+                </div>
+                <button type="submit" class="btn-submit">Send Password via Text SMS</button>
+            </form>
+        </div>
+    </div>
+
     <!-- Footer -->
     <footer class="krcl-footer">
-        © Konkan Railway Corporation Ltd. (A Government of India Undertaking). All rights reserved. | <a href="#">Disclaimer</a>
+        © Konkan Railway Corporation Ltd. (A Government of India Undertaking). All rights reserved.
     </footer>
 
     <script>
@@ -263,6 +278,9 @@
                 pwdIcon.style.color = '#666';
             }
         }
+
+        function openForgotModal() { document.getElementById('forgotModal').style.display = 'flex'; }
+        function closeForgotModal() { document.getElementById('forgotModal').style.display = 'none'; }
     </script>
 
 </body>
