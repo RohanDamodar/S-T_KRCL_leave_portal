@@ -21,11 +21,6 @@ def get_db_connection():
 # PDF मधील सर्व ३४ कर्मचाऱ्यांची लिस्ट (Page 2 to 5)
 PDF_EMPLOYEES = [
     # Page 2: SSE & JE
-    ('80342', 'MNas@8034', 'Mohammad Nasier Zarger', 'SSE/Store', '2026-07-24'),
-    ('7342', 'NCha@7342', 'Nayan S Chaudhari', 'SSE/Sig/Incharge/SGDN', '2026-07-24'),
-    ('7347', 'MShi@7347', 'Mayur D Shilame', 'SSE/Telecom/Incharge/SGDN', '2026-07-24'),
-    ('80983', 'VSha@8098', 'Vipul Sharma', 'SSE/SIGNAL', '2026-07-24'),
-    ('80888', 'NKot@8088', 'Nihal Kotwal', 'SSE/SIGNAL', '2026-07-24'),
     ('80647', 'PDog@8064', 'Pankaj Dogra', 'JE/TELE', '2026-07-24'),
     ('80625', 'GMan@8062', 'Gagandeep Manhas', 'JE/TELE', '2026-07-24'),
     ('80630', 'VShi@8063', 'Vishal Shivgotra', 'JE/TELE', '2026-07-24'),
