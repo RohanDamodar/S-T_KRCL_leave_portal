@@ -18,12 +18,99 @@ def get_db_connection():
     conn = psycopg2.connect(db_url)
     return conn
 
+# PDF मधील सर्व ३४ कर्मचाऱ्यांची लिस्ट (Page 2 to 5)
+PDF_EMPLOYEES = [
+    # Page 2: SSE & JE
+    ('80342', 'MNas@8034', 'Mohammad Nasier Zarger', 'SSE/Store', '2026-07-24'),
+    ('7342', 'NCha@7342', 'Nayan S Chaudhari', 'SSE/Sig/Incharge/SGDN', '2026-07-24'),
+    ('7347', 'MShi@7347', 'Mayur D Shilame', 'SSE/Telecom/Incharge/SGDN', '2026-07-24'),
+    ('80983', 'VSha@8098', 'Vipul Sharma', 'SSE/SIGNAL', '2026-07-24'),
+    ('80888', 'NKot@8088', 'Nihal Kotwal', 'SSE/SIGNAL', '2026-07-24'),
+    ('80647', 'PDog@8064', 'Pankaj Dogra', 'JE/TELE', '2026-07-24'),
+    ('80625', 'GMan@8062', 'Gagandeep Manhas', 'JE/TELE', '2026-07-24'),
+    ('80630', 'VShi@8063', 'Vishal Shivgotra', 'JE/TELE', '2026-07-24'),
+    ('80881', 'VLan@8088', 'Vishal Langeh', 'JE/TELE', '2026-07-24'),
+    ('81335', 'RLan@8133', 'Robin Langeh', 'JE/TELE', '2026-07-24'),
+    ('81346', 'RBha@8134', 'Reyaz Ahmed Bhat', 'JE/TELE', '2026-07-24'),
+    ('81340', 'ASin@8134', 'Akash Dev Singh', 'JE/TELE', '2026-07-24'),
+    ('81338', 'IKum@8133', 'Ishfaq Ahmad Kumar', 'JE/TELE', '2026-07-24'),
+    ('81362', 'IHas@8136', 'Ishfaq Hassan', 'JE/TELE', '2026-07-24'),
+    ('81348', 'ASha@8134', 'Aqib Javed Shah', 'JE/TELE', '2026-07-24'),
+    ('81356', 'BSin@8135', 'S Baljeet Singh', 'JE/TELE', '2026-07-24'),
+    ('81366', 'SSha@8136', 'Shubam Sharma', 'JE/TELE', '2026-07-24'),
+    ('81309', 'NVas@8130', 'Nikunj Vashisth', 'JE/TELE', '2026-07-24'),
+
+    # Page 3 & 4: Technicians
+    ('81359', 'RPan@8135', 'Rishav Pandey', 'Tech - Tele', '2026-07-24'),
+    ('81311', 'ABlo@8131', 'Abhishek Bloch', 'Tech - Signal', '2026-07-24'),
+    ('81341', 'SKum@8134', 'Shravan Kumar', 'Tech - Signal', '2026-07-24'),
+    ('81339', 'AJam@8133', 'Aditya Singh Jamwal', 'Tech - Signal', '2026-07-24'),
+    ('81373', 'TCha@8137', 'Tejas Vinayak Chavan', 'Tech - Signal', '2026-07-24'),
+    ('81375', 'AVER@8137', 'Abhishek Kumar Verma', 'Tech - Signal', '2026-07-24'),
+    ('81384', 'SSha@8138', 'Sahil Sharma', 'Tech - Tele', '2026-07-24'),
+    ('81365', 'OPra@8136', 'Om Singh Prajapati', 'Tech - Signal', '2026-07-24'),
+    ('81342', 'RRaj@8134', 'Rahul Raj', 'Tech - Signal', '2026-07-24'),
+    ('81378', 'SKum@8137', 'Sagar Kumar', 'Tech - Tele', '2026-07-24'),
+    ('81334', 'MAhm@8133', 'Mudasar Ahmed', 'Tech - Tele', '2026-07-24'),
+    ('81370', 'AAry@8137', 'Anil Arya', 'Tech - Tele', '2026-07-24'),
+    ('81349', 'MSaj@8134', 'Maanil Sajgotra', 'Tech - Signal', '2026-07-24'),
+    ('81372', 'MHus@8137', 'Madsar Hussain', 'Tech - Signal', '2026-07-24'),
+    ('81363', 'SSha@8136', 'Sidharth Sharma', 'Tech - Signal', '2026-07-24'),
+    ('81371', 'VKum@8137', 'Vijay Kumar', 'Tech - Tele', '2026-07-24'),
+    ('81364', 'SKal@8136', 'Sahil Kalsi', 'Tech - Tele', '2026-07-24'),
+    ('81376', 'SSha@8137', 'Sarthak Sharma', 'Tech - Tele', '2026-07-24'),
+    ('81345', 'DKum@8134', 'Deep Kumar', 'Tech - Signal', '2026-07-24'),
+    ('81343', 'RDam@8134', 'Rohan Jitendra Damodar', 'Tech - Signal', '2026-07-24'),
+    ('81382', 'HKal@8138', 'Hariom Narayan Kale', 'Tech - Signal', '2026-07-24'),
+    ('81377', 'RKum@8137', 'Romesh Kumar', 'Tech - Tele', '2026-07-24'),
+    ('81358', 'MAfz@8135', 'Mohd Afzal', 'Tech - Tele', '2026-07-24'),
+    ('81368', 'RKal@8136', 'Raghav Kalsa', 'Tech - Signal', '2026-07-24'),
+    ('81353', 'NSud@8135', 'Nandish Sudan', 'Tech - Signal', '2026-07-24'),
+    ('81361', 'HKum@8136', 'Himanshu Kumar', 'Tech - Signal', '2026-07-24'),
+    ('81385', 'MCha@8138', 'Munish Chalotra', 'Tech - Tele', '2026-07-24'),
+    ('81333', 'RSha@8133', 'Rohit Sharma', 'Tech - Signal', '2026-07-24'),
+    ('81354', 'RTha@8135', 'Ravisankar Thakur', 'Tech - Signal', '2026-07-24'),
+    ('80629', 'KNid@8062', 'Karun Nidhan', 'Tech - Tele', '2026-07-24'),
+    ('80631', 'SSha@8063', 'Sahil Sharma', 'Tech - Tele', '2026-07-24'),
+    ('80614', 'SSin@8061', 'Sunil Singh', 'Tech - Signal', '2026-07-24'),
+    ('80616', 'Nour@8061', 'Nourattan', 'Tech - Signal', '2026-07-24'),
+    ('80617', 'DSha@8061', 'Deep Sharma', 'Tech - Signal', '2026-07-24'),
+
+    # Page 5: Helpers & Clerks
+    ('TCS_JK_067', 'MSin@0067', 'Manjeet Singh', 'Store Clerk', '2026-07-24'),
+    ('TCS_JK_068', 'NAtt@0068', 'Neeraj Attri', 'Store Clerk', '2026-07-24'),
+    ('TCS_JK_002', 'NSin@0002', 'Narendra Chanchal Dev Singh', 'Blacksmith', '2026-07-24'),
+    ('TCS_JK_001', 'KSin@0001', 'Kaveet Singh', 'Blacksmith', '2026-07-24'),
+    ('TCS_JK_063', 'SKum@0063', 'Sandeep Kumar', 'Helper - Signal', '2026-07-24'),
+    ('TCS_JK_060', 'MAhm@0060', 'Mudasar Ahmed', 'Helper - Signal', '2026-07-24'),
+    ('TCS_JK_058', 'YAhm@0058', 'Yaseen Ahmed', 'Helper - Signal', '2026-07-24'),
+    ('TCS_JK_065', 'SSin@0065', 'Sunder Singh', 'Helper - Signal', '2026-07-24'),
+    ('TCS_JK_053', 'ASha@0053', 'Ankush Sharma', 'Helper - Signal', '2026-07-24'),
+    ('TCS_JK_061', 'MKum@0061', 'Mukesh Kumar', 'Helper - Signal', '2026-07-24'),
+    ('TCS_JK_055', 'DSin@0055', 'Dalip Singh', 'Helper - Signal', '2026-07-24'),
+    ('TCS_JK_052', 'ASin@0052', 'Akhil Singh', 'Helper - Signal', '2026-07-24'),
+    ('TCS_JK_066', 'SKum@0066', 'Suresh Kumar', 'Helper - Signal', '2026-07-24'),
+    ('TCS_JK_054', 'AKum@0054', 'Ashok kumar', 'Helper - Signal', '2026-07-24'),
+    ('TCS_JK_059', 'MAsl@0059', 'Mohd. Aslam', 'Helper - Signal', '2026-07-24'),
+    ('TCS_JK_062', 'SKal@0062', 'Sahil Kalhotra', 'Helper - Signal', '2026-07-24'),
+    ('TCS_JK_064', 'Sanj@0064', 'Sanjay', 'Helper - Signal', '2026-07-24'),
+    ('TCS_JK_056', 'GSin@0056', 'Gourav Singh', 'Helper - Signal', '2026-07-24'),
+    ('TCS_JK_057', 'MKum@0057', 'Manjeet Kumar', 'Helper - Signal', '2026-07-24'),
+    ('TCS_JK_073', 'PCha@0073', 'Pritam chand', 'Helper - Telecom', '2026-07-24'),
+    ('TCS_JK_070', 'MAfz@0070', 'Mohd Afzal', 'Helper - Telecom', '2026-07-24'),
+    ('TCS_JK_075', 'RKum@0075', 'Ravi Kumar', 'Helper - Telecom', '2026-07-24'),
+    ('TCS_JK_076', 'RKha@0076', 'Reyees Ahmed Khan', 'Helper - Telecom', '2026-07-24'),
+    ('TCS_JK_069', 'ABac@0069', 'Amitab Bachan', 'Helper - Telecom', '2026-07-24'),
+    ('TCS_JK_072', 'PAhm@0072', 'Pervez Ahmed', 'Helper - Telecom', '2026-07-24'),
+    ('TCS_JK_074', 'RSin@0074', 'Rakesh Singh', 'Helper - Telecom', '2026-07-24'),
+    ('TCS_JK_071', 'MPar@0071', 'Mohd Parvez', 'Helper - Telecom', '2026-07-24')
+]
+
 def init_db():
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
         
-        # 1. Base Tables Creation
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS users (
                 user_id VARCHAR(50) PRIMARY KEY,
@@ -56,7 +143,6 @@ def init_db():
         ''')
         conn.commit()
 
-        # 2. Individual Safe Alter Commands
         migrations = [
             "ALTER TABLE users ADD COLUMN IF NOT EXISTS designation VARCHAR(100) DEFAULT '';",
             "ALTER TABLE users ADD COLUMN IF NOT EXISTS assigned_admin TEXT DEFAULT 'ADMIN1';",
@@ -77,12 +163,26 @@ def init_db():
             except Exception as e:
                 conn.rollback()
 
-        # 3. Safe Insert Default Admin
+        # Default Admin Insert
         cursor.execute('''
             INSERT INTO users (user_id, password, name, designation, role, assigned_admin, joining_date) 
             VALUES ('ADMIN1', 'admin123', 'Main Admin', 'Senior Admin', 'admin', 'ADMIN1', '2020-01-01') 
             ON CONFLICT (user_id) DO NOTHING;
         ''')
+        conn.commit()
+
+        # PDF मधील सर्व युझर्स स्वयंचलित (Auto-Insert) करणे
+        today = datetime.now()
+        half = 1 if today.month <= 6 else 2
+        half_key = int(f"{today.year}{half}")
+
+        for u_id, pwd, name, desig, j_date in PDF_EMPLOYEES:
+            cursor.execute('''
+                INSERT INTO users (user_id, password, name, designation, role, assigned_admin, joining_date, el_balance, cl_balance, last_el_update, last_cl_update) 
+                VALUES (%s, %s, %s, %s, 'employee', 'ADMIN1', %s, 15, 8, %s, %s) 
+                ON CONFLICT (user_id) DO NOTHING;
+            ''', (u_id, pwd, name, desig, j_date, half_key, today.year))
+
         conn.commit()
         cursor.close()
         conn.close()
