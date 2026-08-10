@@ -1,131 +1,549 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Admin Dashboard</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - KRCL Leave Portal</title>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        body { font-family: Arial, sans-serif; margin: 30px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-        th { background-color: #f2f2f2; }
-        .container { display: flex; gap: 20px; flex-wrap: wrap; margin-bottom: 30px; }
-        .form-box { background: #f8f9fa; border: 1px solid #ccc; padding: 15px; border-radius: 5px; width: 380px; }
-        .form-group { display: flex; gap: 10px; }
-        input, select, button { width: 100%; margin-top: 8px; padding: 8px; box-sizing: border-box; }
-        .btn-emp { background-color: #28a745; color: white; border: none; cursor: pointer; font-weight: bold; }
-        .btn-admin { background-color: #007bff; color: white; border: none; cursor: pointer; font-weight: bold; }
-        .btn-approve { color: green; text-decoration: none; font-weight: bold; margin-right: 10px; }
-        .btn-reject { color: red; text-decoration: none; font-weight: bold; margin-right: 10px; }
-        .btn-cancel-admin { color: #d9534f; text-decoration: none; font-weight: bold; }
-        .badge-mine { background-color: #d4edda; color: #155724; padding: 3px 6px; border-radius: 3px; font-size: 12px; font-weight: bold; }
-        .badge-other { background-color: #e2e3e5; color: #383d41; padding: 3px 6px; border-radius: 3px; font-size: 12px; }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: Arial, Helvetica, sans-serif;
+        }
+
+        body {
+            background-color: #f4f7fa;
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        /* Top Header Bar */
+        .header-bar {
+            background-color: #ffffff;
+            padding: 12px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #0056b3;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.08);
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .logo-img {
+            height: 60px;
+            width: auto;
+        }
+
+        .title-text h2 {
+            font-size: 18px;
+            color: #032B69;
+            font-weight: bold;
+        }
+
+        .title-text p {
+            font-size: 11px;
+            color: #555;
+            font-weight: 600;
+        }
+
+        .user-nav {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: bold;
+            color: #1a2b4c;
+        }
+
+        .admin-badge {
+            background-color: #0056b3;
+            color: white;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            text-transform: uppercase;
+        }
+
+        .btn-logout {
+            background-color: #dc3545;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 4px;
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: background 0.2s;
+        }
+
+        .btn-logout:hover {
+            background-color: #bd2130;
+        }
+
+        /* Main Container */
+        .container {
+            max-width: 1200px;
+            margin: 25px auto;
+            padding: 0 20px;
+            width: 100%;
+        }
+
+        .page-title {
+            font-size: 20px;
+            color: #032B69;
+            margin-bottom: 25px;
+            font-weight: bold;
+            border-left: 4px solid #0056b3;
+            padding-left: 10px;
+        }
+
+        /* Form Cards Section */
+        .forms-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: #ffffff;
+            border-radius: 8px;
+            padding: 22px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.05);
+            border: 1px solid #e2e8f0;
+        }
+
+        .card-header {
+            font-size: 16px;
+            font-weight: bold;
+            color: #032B69;
+            margin-bottom: 18px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #e8eef7;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .form-group {
+            margin-bottom: 14px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group label {
+            font-size: 12px;
+            font-weight: bold;
+            color: #475569;
+            margin-bottom: 5px;
+        }
+
+        .form-group input, .form-group select {
+            padding: 9px 12px;
+            border: 1px solid #cbd5e1;
+            border-radius: 4px;
+            font-size: 13px;
+            outline: none;
+            background-color: #f8fafc;
+        }
+
+        .form-group input:focus, .form-group select:focus {
+            border-color: #0056b3;
+            background-color: #ffffff;
+        }
+
+        .balance-inputs {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .btn-submit-emp {
+            width: 100%;
+            background-color: #10b981;
+            color: white;
+            border: none;
+            padding: 10px;
+            font-size: 14px;
+            font-weight: bold;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 6px;
+            transition: background 0.2s;
+        }
+
+        .btn-submit-emp:hover {
+            background-color: #059669;
+        }
+
+        .btn-submit-admin {
+            width: 100%;
+            background-color: #0056b3;
+            color: white;
+            border: none;
+            padding: 10px;
+            font-size: 14px;
+            font-weight: bold;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 6px;
+            transition: background 0.2s;
+        }
+
+        .btn-submit-admin:hover {
+            background-color: #032B69;
+        }
+
+        /* Content Table Boxes */
+        .table-box {
+            background: #ffffff;
+            border-radius: 8px;
+            padding: 22px;
+            margin-bottom: 30px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.05);
+            border: 1px solid #e2e8f0;
+        }
+
+        .table-responsive {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 13px;
+        }
+
+        th {
+            background-color: #f1f5f9;
+            color: #334155;
+            padding: 12px;
+            font-weight: bold;
+            border-bottom: 2px solid #cbd5e1;
+        }
+
+        td {
+            padding: 12px;
+            border-bottom: 1px solid #e2e8f0;
+            color: #334155;
+        }
+
+        tr:hover {
+            background-color: #f8fafc;
+        }
+
+        /* Badges & Buttons */
+        .badge-assigned-mine {
+            background-color: #d1fae5;
+            color: #065f46;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: bold;
+        }
+
+        .badge-assigned-other {
+            background-color: #e2e8f0;
+            color: #475569;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+        }
+
+        .badge-pending { background-color: #fef3c7; color: #92400e; padding: 4px 8px; border-radius: 10px; font-weight: bold; }
+        .badge-approved { background-color: #d1fae5; color: #065f46; padding: 4px 8px; border-radius: 10px; font-weight: bold; }
+        .badge-rejected { background-color: #fee2e2; color: #991b1b; padding: 4px 8px; border-radius: 10px; font-weight: bold; }
+        .badge-cancelled { background-color: #e2e8f0; color: #475569; padding: 4px 8px; border-radius: 10px; font-weight: bold; }
+
+        .btn-action-approve {
+            background-color: #10b981;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 4px;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 12px;
+            margin-right: 5px;
+        }
+
+        .btn-action-reject {
+            background-color: #ef4444;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 4px;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 12px;
+            margin-right: 5px;
+        }
+
+        .btn-action-cancel {
+            color: #dc2626;
+            border: 1px solid #fca5a5;
+            background-color: #fef2f2;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+            text-decoration: none;
+        }
+
+        /* Footer */
+        .footer {
+            margin-top: auto;
+            background-color: #e8eef7;
+            text-align: center;
+            padding: 12px;
+            font-size: 12px;
+            color: #555;
+            border-top: 1px solid #d0dbe8;
+        }
     </style>
 </head>
 <body>
-    <h2>Admin Dashboard (Logged in as: {{ session['name'] }} - ID: {{ current_admin }})</h2>
-    <a href="/logout">Logout</a>
 
-    <div class="container">
-        <!-- Employee Form -->
-        <div class="form-box">
-            <h3>Add New Employee</h3>
-            <form method="POST">
-                <input type="hidden" name="action_type" value="add_employee">
-                <input type="text" name="user_id" placeholder="User ID (eg: 101)" required>
-                <input type="password" name="password" placeholder="Password" required>
-                <input type="text" name="name" placeholder="Employee Name" required>
-                
-                <label style="font-size: 12px; font-weight: bold; margin-top: 5px; display: block;">Approving Admin:</label>
-                <select name="assigned_admin" required>
-                    {% for a in admins_list %}
-                        <option value="{{ a[0] }}">{{ a[1] }} ({{ a[0] }})</option>
-                    {% endfor %}
-                </select>
-
-                <h4>Leave Balances:</h4>
-                <div class="form-group">
-                    <input type="number" name="el" placeholder="EL Balance" value="0" required>
-                    <input type="number" name="cl" placeholder="CL Balance" value="0" required>
-                </div>
-                <button type="submit" class="btn-emp">Add Employee</button>
-            </form>
+    <!-- Header Bar -->
+    <header class="header-bar">
+        <div class="logo-container">
+            <img src="{{ url_for('static', filename='logo.png') }}" alt="Konkan Railway Logo" class="logo-img">
+            <div class="title-text">
+                <h2>कोंकण रेलवे कॉर्पोरेशन लिमिटेड</h2>
+                <p>Konkan Railway Corporation Limited (A Govt. Of India Undertaking)</p>
+            </div>
         </div>
 
-        <!-- Admin Form -->
-        <div class="form-box">
-            <h3>Add New Admin</h3>
-            <form method="POST">
-                <input type="hidden" name="action_type" value="add_admin">
-                <input type="text" name="user_id" placeholder="Admin User ID (eg: ADMIN2)" required>
-                <input type="password" name="password" placeholder="Admin Password" required>
-                <input type="text" name="name" placeholder="Admin Name" required>
-                <button type="submit" class="btn-admin" style="margin-top: 20px;">Add Admin</button>
-            </form>
+        <div class="user-nav">
+            <div class="user-info">
+                <i class="fa-solid fa-user-gear fa-lg" style="color: #0056b3;"></i>
+                <span>{{ session['name'] }}</span>
+                <span class="admin-badge">Admin</span>
+            </div>
+            <a href="/logout" class="btn-logout"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <div class="container">
+        <h2 class="page-title">S&T Portal - Admin Control Center</h2>
+
+        <!-- Action Forms Grid -->
+        <div class="forms-grid">
+            <!-- Add Employee Form -->
+            <div class="card">
+                <div class="card-header">
+                    <i class="fa-solid fa-user-plus"></i> Add New Employee
+                </div>
+                <form method="POST">
+                    <input type="hidden" name="action_type" value="add_employee">
+                    
+                    <div class="form-group">
+                        <label>User ID / Employee ID *</label>
+                        <input type="text" name="user_id" placeholder="e.g. 101" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Password *</label>
+                        <input type="password" name="password" placeholder="Set Password" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Employee Name *</label>
+                        <input type="text" name="name" placeholder="Full Name" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Approving Admin *</label>
+                        <select name="assigned_admin" required>
+                            {% for a in admins_list %}
+                                <option value="{{ a[0] }}">{{ a[1] }} ({{ a[0] }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Initial Leave Balances *</label>
+                        <div class="balance-inputs">
+                            <input type="number" name="el" placeholder="EL Balance" value="0" required>
+                            <input type="number" name="cl" placeholder="CL Balance" value="0" required>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn-submit-emp">
+                        <i class="fa-solid fa-check-circle"></i> Add Employee
+                    </button>
+                </form>
+            </div>
+
+            <!-- Add Admin Form -->
+            <div class="card">
+                <div class="card-header">
+                    <i class="fa-solid fa-user-shield"></i> Add New Admin
+                </div>
+                <form method="POST">
+                    <input type="hidden" name="action_type" value="add_admin">
+                    
+                    <div class="form-group">
+                        <label>Admin User ID *</label>
+                        <input type="text" name="user_id" placeholder="e.g. ADMIN2" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Admin Password *</label>
+                        <input type="password" name="password" placeholder="Set Admin Password" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Admin Name *</label>
+                        <input type="text" name="name" placeholder="Full Name" required>
+                    </div>
+
+                    <button type="submit" class="btn-submit-admin" style="margin-top: 85px;">
+                        <i class="fa-solid fa-plus-circle"></i> Add Admin
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Registered Employees Table -->
+        <div class="table-box">
+            <div class="card-header">
+                <i class="fa-solid fa-users"></i> Registered Employees List
+            </div>
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>User ID</th>
+                            <th>Employee Name</th>
+                            <th>Assigned Admin</th>
+                            <th>EL Balance</th>
+                            <th>CL Balance</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if users_list %}
+                            {% for u in users_list %}
+                            <tr>
+                                <td><b>{{ u[0] }}</b></td>
+                                <td>{{ u[1] }}</td>
+                                <td>{{ u[2] }}</td>
+                                <td><b style="color: #0056b3;">{{ u[3] }}</b></td>
+                                <td><b style="color: #10b981;">{{ u[4] }}</b></td>
+                            </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr>
+                                <td colspan="5" style="text-align: center; color: #777;">कोणतेही कर्मचारी जोडलेले नाहीत.</td>
+                            </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Leave Requests Table -->
+        <div class="table-box">
+            <div class="card-header">
+                <i class="fa-solid fa-list-check"></i> Employee Leave Applications
+            </div>
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>User ID</th>
+                            <th>Employee Name</th>
+                            <th>Type</th>
+                            <th>Dates</th>
+                            <th>Reason</th>
+                            <th>Assigned Admin</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if requests %}
+                            {% for req in requests %}
+                            <tr>
+                                <td><b>{{ req[1] }}</b></td>
+                                <td>{{ req[2] }}</td>
+                                <td><b>{{ req[3] }}</b></td>
+                                <td>{{ req[4] }} to {{ req[5] }}</td>
+                                <td>{{ req[6] }}</td>
+                                <td>
+                                    {% if req[8] == current_admin %}
+                                        <span class="badge-assigned-mine"><i class="fa-solid fa-user-check"></i> Assigned to You</span>
+                                    {% else %}
+                                        <span class="badge-assigned-other">Assigned to {{ req[8] }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if req[7] == 'Approved' %}
+                                        <span class="badge-approved">Approved</span>
+                                    {% elif req[7] == 'Pending' %}
+                                        <span class="badge-pending">Pending</span>
+                                    {% elif req[7] == 'Rejected' %}
+                                        <span class="badge-rejected">Rejected</span>
+                                    {% else %}
+                                        <span class="badge-cancelled">Cancelled</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if req[8] == current_admin %}
+                                        {% if req[7] == 'Pending' %}
+                                            <a href="/action/{{ req[0] }}/Approved" class="btn-action-approve"><i class="fa-solid fa-check"></i> Approve</a>
+                                            <a href="/action/{{ req[0] }}/Rejected" class="btn-action-reject"><i class="fa-solid fa-xmark"></i> Reject</a>
+                                        {% elif req[7] == 'Approved' %}
+                                            <a href="/cancel_leave/{{ req[0] }}" class="btn-action-cancel" onclick="return confirm('ही मंजूर झालेली रजा रद्द करायची का?');">Cancel Approval</a>
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    {% else %}
+                                        <span style="color: #94a3b8; font-size: 11px;">Restricted</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr>
+                                <td colspan="8" style="text-align: center; color: #777;">कोणतेही अर्ज उपलब्ध नाहीत.</td>
+                            </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 
-    <h3>Registered Employees List</h3>
-    <table>
-        <tr>
-            <th>User ID</th>
-            <th>Name</th>
-            <th>Assigned Admin</th>
-            <th>EL Balance</th>
-            <th>CL Balance</th>
-        </tr>
-        {% for u in users_list %}
-        <tr>
-            <td>{{ u[0] }}</td>
-            <td>{{ u[1] }}</td>
-            <td>{{ u[2] }}</td>
-            <td><b>{{ u[3] }}</b></td>
-            <td><b>{{ u[4] }}</b></td>
-        </tr>
-        {% endfor %}
-    </table>
+    <!-- Footer -->
+    <footer class="footer">
+        © Konkan Railway Corporation Ltd. (A Government of India Undertaking). All rights reserved.
+    </footer>
 
-    <h3 style="margin-top: 30px;">Leave Applications</h3>
-    <table>
-        <tr>
-            <th>User ID</th>
-            <th>Employee Name</th>
-            <th>Type</th>
-            <th>Dates</th>
-            <th>Reason</th>
-            <th>Assigned Admin</th>
-            <th>Status</th>
-            <th>Action</th>
-        </tr>
-        {% for req in requests %}
-        <tr>
-            <td>{{ req[1] }}</td>
-            <td>{{ req[2] }}</td>
-            <td><b>{{ req[3] }}</b></td>
-            <td>{{ req[4] }} to {{ req[5] }}</td>
-            <td>{{ req[6] }}</td>
-            <td>
-                {% if req[8] == current_admin %}
-                    <span class="badge-mine">Assigned to You</span>
-                {% else %}
-                    <span class="badge-other">Assigned to {{ req[8] }}</span>
-                {% endif %}
-            </td>
-            <td><b>{{ req[7] }}</b></td>
-            <td>
-                {% if req[8] == current_admin %}
-                    {% if req[7] == 'Pending' %}
-                        <a href="/action/{{ req[0] }}/Approved" class="btn-approve">Approve</a>
-                        <a href="/action/{{ req[0] }}/Rejected" class="btn-reject">Reject</a>
-                    {% elif req[7] == 'Approved' %}
-                        <a href="/cancel_leave/{{ req[0] }}" class="btn-cancel-admin" onclick="return confirm('ही मंजूर झालेली रजा रद्द करायची का?');">Cancel Approved Leave</a>
-                    {% else %}
-                        Completed / {{ req[7] }}
-                    {% endif %}
-                {% else %}
-                    <span style="color: #777; font-size: 12px;">(Only {{ req[8] }} can approve)</span>
-                {% endif %}
-            </td>
-        </tr>
-        {% endfor %}
-    </table>
 </body>
 </html>
