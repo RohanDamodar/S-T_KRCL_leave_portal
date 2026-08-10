@@ -119,7 +119,6 @@
                         </select>
                     </div>
 
-                    <!-- Single Leave Dates -->
                     <div class="form-group single-date-group">
                         <label>Start Date *</label>
                         <input type="date" name="start_date" id="singleStart">
@@ -131,28 +130,15 @@
                     </div>
                 </div>
 
-                <!-- Combined EL + CL Custom Dates Box -->
                 <div id="combinedDatesBox" class="custom-dates-box">
                     <h4 style="font-size: 13px; color: #0056b3; margin-bottom: 10px;">
                         <i class="fa-solid fa-sliders"></i> Customize EL & CL Dates:
                     </h4>
                     <div class="form-grid">
-                        <div class="form-group">
-                            <label>EL Start Date *</label>
-                            <input type="date" name="el_start_date" id="elStart">
-                        </div>
-                        <div class="form-group">
-                            <label>EL End Date *</label>
-                            <input type="date" name="el_end_date" id="elEnd">
-                        </div>
-                        <div class="form-group">
-                            <label>CL Start Date *</label>
-                            <input type="date" name="cl_start_date" id="clStart">
-                        </div>
-                        <div class="form-group">
-                            <label>CL End Date *</label>
-                            <input type="date" name="cl_end_date" id="clEnd">
-                        </div>
+                        <div class="form-group"><label>EL Start Date *</label><input type="date" name="el_start_date" id="elStart"></div>
+                        <div class="form-group"><label>EL End Date *</label><input type="date" name="el_end_date" id="elEnd"></div>
+                        <div class="form-group"><label>CL Start Date *</label><input type="date" name="cl_start_date" id="clStart"></div>
+                        <div class="form-group"><label>CL End Date *</label><input type="date" name="cl_end_date" id="clEnd"></div>
                     </div>
                 </div>
 
@@ -180,6 +166,7 @@
                             <th>Details / Dates Breakdown</th>
                             <th>Reason</th>
                             <th>Status</th>
+                            <th>Approved / Action By</th>
                             <th>Action</th>
                         </tr>
                     </thead>
@@ -190,8 +177,8 @@
                                 <td><b>{{ req[1] }}</b></td>
                                 <td>
                                     {% if req[1] == 'EL+CL' %}
-                                        <small style="display:block;"><b>EL Dates:</b> {{ req[4] }}</small>
-                                        <small style="display:block;"><b>CL Dates:</b> {{ req[5] }}</small>
+                                        <small style="display:block;"><b>EL:</b> {{ req[4] }}</small>
+                                        <small style="display:block;"><b>CL:</b> {{ req[5] }}</small>
                                     {% else %}
                                         {{ req[2] }} to {{ req[3] }}
                                     {% endif %}
@@ -209,6 +196,13 @@
                                     {% endif %}
                                 </td>
                                 <td>
+                                    {% if req[8] %}
+                                        <small style="color: #0056b3; font-weight: bold;">{{ req[8] }}</small>
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
+                                <td>
                                     {% if req[7] != 'Cancelled' and req[7] != 'Rejected' %}
                                         <a href="/cancel_leave/{{ req[0] }}" class="btn-cancel" onclick="return confirm('तुम्हाला ही रजा रद्द करायची आहे का?');">Cancel</a>
                                     {% else %}
@@ -218,9 +212,7 @@
                             </tr>
                             {% endfor %}
                         {% else %}
-                            <tr>
-                                <td colspan="5" style="text-align: center; color: #777;">नो रेकॉर्ड सापडले नाहीत.</td>
-                            </tr>
+                            <tr><td colspan="6" style="text-align: center; color: #777;">नो रेकॉर्ड सापडले नाहीत.</td></tr>
                         {% endif %}
                     </tbody>
                 </table>
