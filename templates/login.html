@@ -24,9 +24,8 @@
         /* Top Header Bar */
         .krcl-header {
             background-color: #ffffff;
-            padding: 12px 30px;
+            padding: 10px 25px;
             display: flex;
-            justify-content: space-between;
             align-items: center;
             border-bottom: 1px solid #e0e0e0;
             box-shadow: 0 2px 5px rgba(0,0,0,0.05);
@@ -39,8 +38,9 @@
         }
 
         .krcl-logo-img {
-            height: 55px;
+            height: 52px;
             width: auto;
+            object-fit: contain;
         }
 
         .company-title h2 {
@@ -54,28 +54,6 @@
             font-size: 12px;
             color: #555;
             font-weight: 600;
-        }
-
-        .nav-right {
-            display: flex;
-            align-items: center;
-            gap: 25px;
-            font-size: 15px;
-            color: #333;
-        }
-
-        .nav-link {
-            text-decoration: none;
-            color: #333;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            font-weight: bold;
-            cursor: pointer;
-        }
-
-        .nav-link:hover {
-            color: #0056b3;
         }
 
         /* Portal Name Strip */
@@ -92,11 +70,11 @@
             font-weight: bold;
         }
 
-        /* Main Section with KRCL Scenic Background */
+        /* Main Section with Konkan Railway Scenic Background */
         .main-content {
             flex: 1;
-            background: linear-gradient(rgba(0, 0, 0, 0.25), rgba(0, 0, 0, 0.25)), 
-                        url('https://images.unsplash.com/photo-1541872703-74c5e44368f9?q=80&w=1600') no-repeat center center;
+            background: linear-gradient(rgba(0, 0, 0, 0.15), rgba(0, 0, 0, 0.15)), 
+                        url('https://wps.konkanrailway.com/wpcli/assets/images/header-bg.jpg') no-repeat center center;
             background-size: cover;
             display: flex;
             justify-content: center;
@@ -104,14 +82,23 @@
             padding: 40px 20px;
         }
 
-        /* Login Floating Form Card */
+        /* Fallback background image in case KRCL internal link restricts */
+        @supports not (background: url('https://wps.konkanrailway.com/wpcli/assets/images/header-bg.jpg')) {
+            .main-content {
+                background: linear-gradient(rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.2)), 
+                            url('https://images.unsplash.com/photo-1541872703-74c5e44368f9?q=80&w=1600') no-repeat center center;
+                background-size: cover;
+            }
+        }
+
+        /* Login Card */
         .login-card {
             background: rgba(255, 255, 255, 0.95);
             padding: 30px 35px;
             border-radius: 8px;
             width: 100%;
             max-width: 420px;
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
             backdrop-filter: blur(4px);
         }
 
@@ -189,6 +176,7 @@
             color: #0056b3;
             text-decoration: none;
             font-weight: bold;
+            cursor: pointer;
         }
 
         .forgot-link:hover {
@@ -217,18 +205,14 @@
     <!-- Header Section -->
     <header class="krcl-header">
         <div class="logo-section">
-            <!-- KRCL Official Logo Image -->
-            <img src="https://upload.wikimedia.org/wikipedia/en/2/23/Konkan_Railway_logo.png" alt="KRCL Logo" class="krcl-logo-img">
+            <!-- KRCL Logo Image -->
+            <img src="https://wps.konkanrailway.com/wpcli/assets/images/krcl-logo.png" 
+                 onerror="this.onerror=null; this.src='https://upload.wikimedia.org/wikipedia/commons/1/17/Indian_Railway_Report_Logo.png';" 
+                 alt="KRCL Logo" class="krcl-logo-img">
             <div class="company-title">
                 <h2>कोंकण रेलवे कॉर्पोरेशन लिमिटेड</h2>
                 <p>(भारत सरकार का उपक्रम) / Konkan Railway Corporation Limited (A Govt. Of India Undertaking)</p>
             </div>
-        </div>
-
-        <div class="nav-right">
-            <span>हिंदी <i class="fa-solid fa-globe"></i></span>
-            <a href="#" class="nav-link"><i class="fa-solid fa-user-plus"></i> Sign Up</a>
-            <a href="#" class="nav-link"><i class="fa-solid fa-right-to-bracket"></i> Login</a>
         </div>
     </header>
 
@@ -261,7 +245,7 @@
 
                 <button type="submit" class="btn-submit">Sign-In</button>
 
-                <a href="#" class="forgot-link" onclick="alert('कृपया पासवर्डसाठी आपल्या S&T Admin शी संपर्क साधा.');">Forgot Password? Click Here..</a>
+                <a class="forgot-link" onclick="alert('कृपया पासवर्डसाठी आपल्या S&T Admin शी संपर्क साधा.');">Forgot Password? Click Here..</a>
             </form>
         </div>
     </main>
@@ -282,7 +266,6 @@
                 pwdIcon.classList.add('fa-lock-open');
                 pwdIcon.style.color = '#0056b3';
             } else {
-                pwdInput.type = 'type';
                 pwdInput.type = 'password';
                 pwdIcon.classList.remove('fa-lock-open');
                 pwdIcon.classList.add('fa-lock');
