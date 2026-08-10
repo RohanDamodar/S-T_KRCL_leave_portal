@@ -51,13 +51,23 @@ def init_db():
         );
     ''')
     
-    try:
-        cursor.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS assigned_admin TEXT;")
-        cursor.execute("ALTER TABLE leave_requests ADD COLUMN IF NOT EXISTS el_dates VARCHAR(50) DEFAULT '';")
-        cursor.execute("ALTER TABLE leave_requests ADD COLUMN IF NOT EXISTS cl_dates VARCHAR(50) DEFAULT '';")
-        cursor.execute("ALTER TABLE leave_requests ADD COLUMN IF NOT EXISTS approved_by VARCHAR(100) DEFAULT '';")
-    except Exception as e:
-        conn.rollback()
+    # Auto-Migration for missing columns (Safe Executions)
+    columns_to_add = [
+        ("users", "assigned_admin TEXT"),
+        ("users", "joining_date VARCHAR(20)"),
+        ("users", "last_el_update INT DEFAULT 0"),
+        ("users", "last_cl_update INT DEFAULT 0"),
+        ("leave_requests", "el_dates VARCHAR(50) DEFAULT ''"),
+        ("leave_requests", "cl_dates VARCHAR(50) DEFAULT ''"),
+        ("leave_requests", "approved_by VARCHAR(100) DEFAULT ''")
+    ]
+    
+    for table, col_def in columns_to_add:
+        try:
+            cursor.execute(f"ALTER TABLE {table} ADD COLUMN IF NOT EXISTS {col_def};")
+            conn.commit()
+        except Exception as e:
+            conn.rollback()
 
     cursor.execute('''
         INSERT INTO users (user_id, password, name, role, assigned_admin, joining_date) 
@@ -75,33 +85,40 @@ except Exception as e:
     print(f"Database setup error: {e}")
 
 def update_leave_balances():
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    
-    today = datetime.now()
-    current_year = today.year
-    current_month = today.month
-    
-    current_half = 1 if current_month <= 6 else 2
-    half_key = int(f"{current_year}{current_half}")
-    
-    cursor.execute("SELECT user_id, el_balance, cl_balance, last_el_update, last_cl_update FROM users WHERE role = 'employee'")
-    employees = cursor.fetchall()
-    
-    for emp in employees:
-        u_id, el, cl, last_el, last_cl = emp
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
         
-        if last_el < half_key:
-            new_el = el + 15
-            cursor.execute("UPDATE users SET el_balance = %s, last_el_update = %s WHERE user_id = %s", (new_el, half_key, u_id))
+        today = datetime.now()
+        current_year = today.year
+        current_month = today.month
+        
+        current_half = 1 if current_month <= 6 else 2
+        half_key = int(f"{current_year}{current_half}")
+        
+        cursor.execute("SELECT user_id, el_balance, cl_balance, last_el_update, last_cl_update FROM users WHERE role = 'employee'")
+        employees = cursor.fetchall()
+        
+        for emp in employees:
+            u_id, el, cl, last_el, last_cl = emp
+            last_el = last_el or 0
+            last_cl = last_cl or 0
+            el = el or 0
+            cl = cl or 0
             
-        if last_cl < current_year:
-            new_cl = 8
-            cursor.execute("UPDATE users SET cl_balance = %s, last_cl_update = %s WHERE user_id = %s", (new_cl, current_year, u_id))
-            
-    conn.commit()
-    cursor.close()
-    conn.close()
+            if last_el < half_key:
+                new_el = el + 15
+                cursor.execute("UPDATE users SET el_balance = %s, last_el_update = %s WHERE user_id = %s", (new_el, half_key, u_id))
+                
+            if last_cl < current_year:
+                new_cl = 8
+                cursor.execute("UPDATE users SET cl_balance = %s, last_cl_update = %s WHERE user_id = %s", (new_cl, current_year, u_id))
+                
+        conn.commit()
+        cursor.close()
+        conn.close()
+    except Exception as err:
+        print("Update balances error:", err)
 
 @app.route('/', methods=['GET', 'POST'])
 def login():
@@ -200,11 +217,11 @@ def cancel_leave(req_id):
 
             if status == 'Approved':
                 if l_type == 'EL+CL':
-                    if el_dates:
+                    if el_dates and ' to ' in el_dates:
                         s_dt, e_dt = el_dates.split(' to ')
                         el_days = (datetime.strptime(e_dt, "%Y-%m-%d") - datetime.strptime(s_dt, "%Y-%m-%d")).days + 1
                         cursor.execute("UPDATE users SET el_balance = el_balance + %s WHERE user_id = %s", (el_days, u_id))
-                    if cl_dates:
+                    if cl_dates and ' to ' in cl_dates:
                         s_dt, e_dt = cl_dates.split(' to ')
                         cl_days = (datetime.strptime(e_dt, "%Y-%m-%d") - datetime.strptime(s_dt, "%Y-%m-%d")).days + 1
                         cursor.execute("UPDATE users SET cl_balance = cl_balance + %s WHERE user_id = %s", (cl_days, u_id))
@@ -249,8 +266,8 @@ def admin_dashboard():
             el_input = request.form.get('el')
             cl_input = request.form.get('cl')
             
-            el = int(el_input) if el_input != "" else 15
-            cl = int(cl_input) if cl_input != "" else 8
+            el = int(el_input) if el_input != "" and el_input is not None else 15
+            cl = int(cl_input) if cl_input != "" and cl_input is not None else 8
             
             today = datetime.now()
             half = 1 if today.month <= 6 else 2
@@ -334,6 +351,8 @@ def action(req_id, status):
         if data:
             u_id, l_type, start_date, end_date, el_dates, cl_dates, current_status, assigned_admin, current_el, current_cl = data
             assigned_list = [a.strip() for a in assigned_admin.split(',')] if assigned_admin else []
+            current_el = current_el or 0
+            current_cl = current_cl or 0
             
             if session['user_id'] in assigned_list or session['user_id'] == 'ADMIN1':
                 now_str = datetime.now().strftime("%d-%b-%Y %I:%M %p")
@@ -342,14 +361,13 @@ def action(req_id, status):
                 if status == 'Approved' and current_status != 'Approved':
                     if l_type == 'EL+CL':
                         el_days, cl_days = 0, 0
-                        if el_dates:
+                        if el_dates and ' to ' in el_dates:
                             s_dt, e_dt = el_dates.split(' to ')
                             el_days = (datetime.strptime(e_dt, "%Y-%m-%d") - datetime.strptime(s_dt, "%Y-%m-%d")).days + 1
-                        if cl_dates:
+                        if cl_dates and ' to ' in cl_dates:
                             s_dt, e_dt = cl_dates.split(' to ')
                             cl_days = (datetime.strptime(e_dt, "%Y-%m-%d") - datetime.strptime(s_dt, "%Y-%m-%d")).days + 1
                         
-                        # Negative balance check
                         if current_el >= el_days and current_cl >= cl_days:
                             cursor.execute("UPDATE users SET el_balance = el_balance - %s, cl_balance = cl_balance - %s WHERE user_id = %s", (el_days, cl_days, u_id))
                             cursor.execute("UPDATE leave_requests SET status = %s, approved_by = %s WHERE id = %s", (status, approver_info, req_id))
