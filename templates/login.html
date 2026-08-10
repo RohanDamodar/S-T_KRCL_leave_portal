@@ -1,22 +1,295 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Leave Portal - Login</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Konkan Railway - Leave Web Portal</title>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        body { font-family: Arial, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; background-color: #f4f4f9; }
-        .login-box { background: white; padding: 25px; border-radius: 8px; box-shadow: 0px 0px 10px #ccc; width: 300px; }
-        input, button { width: 100%; padding: 10px; margin-top: 10px; box-sizing: border-box; }
-        button { background-color: #007bff; color: white; border: none; cursor: pointer; }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: Arial, Helvetica, sans-serif;
+        }
+
+        body {
+            background-color: #f4f6f9;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        /* Top Header Bar */
+        .krcl-header {
+            background-color: #ffffff;
+            padding: 12px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #e0e0e0;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .krcl-logo-img {
+            height: 55px;
+            width: auto;
+        }
+
+        .company-title h2 {
+            font-size: 18px;
+            color: #1a2b4c;
+            font-weight: bold;
+            margin-bottom: 2px;
+        }
+
+        .company-title p {
+            font-size: 12px;
+            color: #555;
+            font-weight: 600;
+        }
+
+        .nav-right {
+            display: flex;
+            align-items: center;
+            gap: 25px;
+            font-size: 15px;
+            color: #333;
+        }
+
+        .nav-link {
+            text-decoration: none;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .nav-link:hover {
+            color: #0056b3;
+        }
+
+        /* Portal Name Strip */
+        .portal-strip {
+            background-color: #e8eef7;
+            text-align: center;
+            padding: 10px;
+            border-bottom: 1px solid #d0dbe8;
+        }
+
+        .portal-strip h1 {
+            font-size: 20px;
+            color: #1a2b4c;
+            font-weight: bold;
+        }
+
+        /* Main Section with KRCL Scenic Background */
+        .main-content {
+            flex: 1;
+            background: linear-gradient(rgba(0, 0, 0, 0.25), rgba(0, 0, 0, 0.25)), 
+                        url('https://images.unsplash.com/photo-1541872703-74c5e44368f9?q=80&w=1600') no-repeat center center;
+            background-size: cover;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 40px 20px;
+        }
+
+        /* Login Floating Form Card */
+        .login-card {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 30px 35px;
+            border-radius: 8px;
+            width: 100%;
+            max-width: 420px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(4px);
+        }
+
+        .login-card h3 {
+            color: #1a2b4c;
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 22px;
+            border-bottom: 2px solid #0056b3;
+            padding-bottom: 8px;
+        }
+
+        .form-group {
+            margin-bottom: 18px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 14px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 6px;
+        }
+
+        .input-box {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .input-box input {
+            width: 100%;
+            padding: 10px 40px 10px 12px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 14px;
+            outline: none;
+        }
+
+        .input-box input:focus {
+            border-color: #0056b3;
+            box-shadow: 0 0 5px rgba(0, 86, 179, 0.3);
+        }
+
+        .input-box i {
+            position: absolute;
+            right: 12px;
+            color: #666;
+            cursor: pointer;
+        }
+
+        .btn-submit {
+            width: 100%;
+            background-color: #1a2b4c;
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 4px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: background 0.2s;
+        }
+
+        .btn-submit:hover {
+            background-color: #0056b3;
+        }
+
+        .forgot-link {
+            display: block;
+            text-align: right;
+            margin-top: 12px;
+            font-size: 13px;
+            color: #0056b3;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        .forgot-link:hover {
+            text-decoration: underline;
+        }
+
+        /* Footer Bar */
+        .krcl-footer {
+            background-color: #e8eef7;
+            text-align: center;
+            padding: 12px;
+            font-size: 13px;
+            color: #333;
+            border-top: 1px solid #d0dbe8;
+        }
+
+        .krcl-footer a {
+            color: #0056b3;
+            text-decoration: none;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
-    <div class="login-box">
-        <h2>Leave Application Portal</h2>
-        <form method="POST">
-            <input type="text" name="user_id" placeholder="Unique User ID (eg: EMP101)" required>
-            <input type="password" name="password" placeholder="Password" required>
-            <button type="submit">Login</button>
-        </form>
+
+    <!-- Header Section -->
+    <header class="krcl-header">
+        <div class="logo-section">
+            <!-- KRCL Official Logo Image -->
+            <img src="https://upload.wikimedia.org/wikipedia/en/2/23/Konkan_Railway_logo.png" alt="KRCL Logo" class="krcl-logo-img">
+            <div class="company-title">
+                <h2>कोंकण रेलवे कॉर्पोरेशन लिमिटेड</h2>
+                <p>(भारत सरकार का उपक्रम) / Konkan Railway Corporation Limited (A Govt. Of India Undertaking)</p>
+            </div>
+        </div>
+
+        <div class="nav-right">
+            <span>हिंदी <i class="fa-solid fa-globe"></i></span>
+            <a href="#" class="nav-link"><i class="fa-solid fa-user-plus"></i> Sign Up</a>
+            <a href="#" class="nav-link"><i class="fa-solid fa-right-to-bracket"></i> Login</a>
+        </div>
+    </header>
+
+    <!-- Portal Strip -->
+    <div class="portal-strip">
+        <h1>लीव्ह वेब पोर्टल / Leave Web Portal</h1>
     </div>
+
+    <!-- Background Section with Login Card -->
+    <main class="main-content">
+        <div class="login-card">
+            <h3>Login to Portal</h3>
+            
+            <form method="POST" action="/">
+                <div class="form-group">
+                    <label>Login ID / Employee ID *</label>
+                    <div class="input-box">
+                        <input type="text" name="user_id" placeholder="Enter Employee Id" required>
+                        <i class="fa-solid fa-user"></i>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Password *</label>
+                    <div class="input-box">
+                        <input type="password" id="pwdInput" name="password" placeholder="Enter Password" required>
+                        <i class="fa-solid fa-lock" id="pwdIcon" onclick="togglePassword()"></i>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-submit">Sign-In</button>
+
+                <a href="#" class="forgot-link" onclick="alert('कृपया पासवर्डसाठी आपल्या S&T Admin शी संपर्क साधा.');">Forgot Password? Click Here..</a>
+            </form>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="krcl-footer">
+        © Konkan Railway Corporation Ltd. (A Government of India Undertaking). All rights reserved. | <a href="#">Disclaimer</a>
+    </footer>
+
+    <script>
+        function togglePassword() {
+            const pwdInput = document.getElementById('pwdInput');
+            const pwdIcon = document.getElementById('pwdIcon');
+
+            if (pwdInput.type === 'password') {
+                pwdInput.type = 'text';
+                pwdIcon.classList.remove('fa-lock');
+                pwdIcon.classList.add('fa-lock-open');
+                pwdIcon.style.color = '#0056b3';
+            } else {
+                pwdInput.type = 'type';
+                pwdInput.type = 'password';
+                pwdIcon.classList.remove('fa-lock-open');
+                pwdIcon.classList.add('fa-lock');
+                pwdIcon.style.color = '#666';
+            }
+        }
+    </script>
+
 </body>
 </html>
