@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Employee Leave Portal - Konkan Railway</title>
+    <title>Admin Dashboard - KRCL Leave Portal</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: Arial, Helvetica, sans-serif; }
@@ -17,49 +17,49 @@
         
         .user-nav { display: flex; align-items: center; gap: 20px; }
         .user-info { display: flex; align-items: center; gap: 8px; font-weight: bold; color: #1a2b4c; }
+        .admin-badge { background-color: #0056b3; color: white; padding: 3px 8px; border-radius: 4px; font-size: 11px; text-transform: uppercase; }
         .btn-logout { background-color: #dc3545; color: white; padding: 8px 16px; border-radius: 4px; text-decoration: none; font-size: 13px; font-weight: bold; display: flex; align-items: center; gap: 6px; }
         
-        .container { max-width: 1100px; margin: 25px auto; padding: 0 20px; width: 100%; }
-        .page-title { font-size: 20px; color: #032B69; margin-bottom: 20px; font-weight: bold; border-left: 4px solid #0056b3; padding-left: 10px; }
+        .container { max-width: 1200px; margin: 25px auto; padding: 0 20px; width: 100%; }
+        .page-title { font-size: 20px; color: #032B69; margin-bottom: 25px; font-weight: bold; border-left: 4px solid #0056b3; padding-left: 10px; }
         
-        .balance-section { display: flex; gap: 20px; margin-bottom: 30px; flex-wrap: wrap; }
-        .balance-card { flex: 1; min-width: 220px; background: #ffffff; border-radius: 8px; padding: 20px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 3px 10px rgba(0,0,0,0.05); border-left: 5px solid #0056b3; }
-        .balance-card.cl { border-left-color: #28a745; }
-        .card-details p { font-size: 14px; color: #666; font-weight: bold; margin-bottom: 5px; }
-        .card-details h3 { font-size: 28px; color: #1a2b4c; font-weight: 900; }
-        .card-icon { font-size: 36px; color: #0056b3; opacity: 0.8; }
-        .balance-card.cl .card-icon { color: #28a745; }
+        .forms-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 25px; margin-bottom: 30px; }
+        .card { background: #ffffff; border-radius: 8px; padding: 22px; box-shadow: 0 3px 10px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; }
+        .card-header { font-size: 16px; font-weight: bold; color: #032B69; margin-bottom: 18px; padding-bottom: 8px; border-bottom: 2px solid #e8eef7; display: flex; align-items: center; gap: 8px; }
         
-        .content-box { background: #ffffff; border-radius: 8px; padding: 25px; margin-bottom: 30px; box-shadow: 0 3px 10px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; }
-        .box-header { font-size: 16px; font-weight: bold; color: #032B69; margin-bottom: 20px; padding-bottom: 8px; border-bottom: 2px solid #e8eef7; display: flex; align-items: center; gap: 8px; }
+        .form-group { margin-bottom: 14px; display: flex; flex-direction: column; }
+        .form-group label { font-size: 12px; font-weight: bold; color: #475569; margin-bottom: 5px; }
+        .form-group input, .form-group select { padding: 9px 12px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 13px; outline: none; background-color: #f8fafc; }
+        .form-group input:focus, .form-group select:focus { border-color: #0056b3; background-color: #ffffff; }
         
-        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; margin-bottom: 15px; }
-        .form-group { display: flex; flex-direction: column; }
-        .form-group.full-width { grid-column: 1 / -1; }
-        .form-group label { font-size: 13px; font-weight: bold; color: #444; margin-bottom: 6px; }
-        .form-group input, .form-group select, .form-group textarea { padding: 10px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 14px; outline: none; background-color: #f8fafc; }
-        .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: #0056b3; background-color: #ffffff; }
+        .checkbox-group { background: #f8fafc; border: 1px solid #cbd5e1; padding: 10px; border-radius: 4px; max-height: 100px; overflow-y: auto; }
+        .checkbox-item { display: flex; align-items: center; gap: 8px; font-size: 13px; margin-bottom: 4px; cursor: pointer; }
         
-        .btn-submit { background-color: #0056b3; color: white; border: none; padding: 12px 24px; font-size: 15px; font-weight: bold; border-radius: 4px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; }
-        .btn-submit:hover { background-color: #032B69; }
+        .balance-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         
+        .btn-submit-emp { width: 100%; background-color: #10b981; color: white; border: none; padding: 10px; font-size: 14px; font-weight: bold; border-radius: 4px; cursor: pointer; margin-top: 10px; display: flex; justify-content: center; align-items: center; gap: 6px; }
+        .btn-submit-admin { width: 100%; background-color: #0056b3; color: white; border: none; padding: 10px; font-size: 14px; font-weight: bold; border-radius: 4px; cursor: pointer; margin-top: 10px; display: flex; justify-content: center; align-items: center; gap: 6px; }
+        
+        .table-box { background: #ffffff; border-radius: 8px; padding: 22px; margin-bottom: 30px; box-shadow: 0 3px 10px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; }
         .table-responsive { overflow-x: auto; }
-        table { width: 100%; border-collapse: collapse; text-align: left; font-size: 14px; }
+        table { width: 100%; border-collapse: collapse; text-align: left; font-size: 13px; }
         th { background-color: #f1f5f9; color: #334155; padding: 12px; font-weight: bold; border-bottom: 2px solid #cbd5e1; }
         td { padding: 12px; border-bottom: 1px solid #e2e8f0; color: #334155; }
         tr:hover { background-color: #f8fafc; }
         
-        .badge { padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: bold; display: inline-block; }
-        .badge-pending { background-color: #fef3c7; color: #92400e; }
-        .badge-approved { background-color: #d1fae5; color: #065f46; }
-        .badge-rejected { background-color: #fee2e2; color: #991b1b; }
-        .badge-cancelled { background-color: #e2e8f0; color: #475569; }
+        .badge-assigned-mine { background-color: #d1fae5; color: #065f46; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; }
+        .badge-assigned-other { background-color: #e2e8f0; color: #475569; padding: 3px 8px; border-radius: 4px; font-size: 11px; }
+        .badge-pending { background-color: #fef3c7; color: #92400e; padding: 4px 8px; border-radius: 10px; font-weight: bold; }
+        .badge-approved { background-color: #d1fae5; color: #065f46; padding: 4px 8px; border-radius: 10px; font-weight: bold; }
+        .badge-rejected { background-color: #fee2e2; color: #991b1b; padding: 4px 8px; border-radius: 10px; font-weight: bold; }
+        .badge-cancelled { background-color: #e2e8f0; color: #475569; padding: 4px 8px; border-radius: 10px; font-weight: bold; }
         
-        .btn-cancel { color: #dc2626; border: 1px solid #fca5a5; background-color: #fef2f2; padding: 4px 10px; border-radius: 4px; font-size: 12px; font-weight: bold; text-decoration: none; }
-        .btn-cancel:hover { background-color: #dc2626; color: white; }
+        .btn-action-approve { background-color: #10b981; color: white; padding: 5px 10px; border-radius: 4px; text-decoration: none; font-weight: bold; font-size: 12px; margin-right: 5px; }
+        .btn-action-reject { background-color: #ef4444; color: white; padding: 5px 10px; border-radius: 4px; text-decoration: none; font-weight: bold; font-size: 12px; margin-right: 5px; }
+        .btn-action-cancel { color: #dc2626; border: 1px solid #fca5a5; background-color: #fef2f2; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; text-decoration: none; }
+        .btn-delete-user { color: #dc2626; background: #fee2e2; border: 1px solid #fca5a5; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; text-decoration: none; }
+        .btn-delete-user:hover { background: #dc2626; color: white; }
         .footer { margin-top: auto; background-color: #e8eef7; text-align: center; padding: 12px; font-size: 12px; color: #555; border-top: 1px solid #d0dbe8; }
-        
-        .custom-dates-box { background: #f1f5f9; padding: 15px; border-radius: 6px; border: 1px dashed #0056b3; margin-bottom: 15px; display: none; }
     </style>
 </head>
 <body>
@@ -75,98 +75,113 @@
 
         <div class="user-nav">
             <div class="user-info">
-                <i class="fa-solid fa-circle-user fa-lg" style="color: #0056b3;"></i>
-                <span>{{ name }}</span>
+                <i class="fa-solid fa-user-gear fa-lg" style="color: #0056b3;"></i>
+                <span>{{ session['name'] }}</span>
+                <span class="admin-badge">Admin</span>
             </div>
             <a href="/logout" class="btn-logout"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
         </div>
     </header>
 
     <div class="container">
-        <h2 class="page-title">S&T Staff Leave Management Dashboard</h2>
+        <h2 class="page-title">S&T Portal - Admin Control Center</h2>
 
-        <div class="balance-section">
-            <div class="balance-card">
-                <div class="card-details">
-                    <p>EL Balance (Earned Leave)</p>
-                    <h3>{{ balances[0] }}</h3>
-                </div>
-                <div class="card-icon"><i class="fa-solid fa-calendar-check"></i></div>
-            </div>
-
-            <div class="balance-card cl">
-                <div class="card-details">
-                    <p>CL Balance (Casual Leave)</p>
-                    <h3>{{ balances[1] }}</h3>
-                </div>
-                <div class="card-icon"><i class="fa-solid fa-umbrella-beach"></i></div>
-            </div>
-        </div>
-
-        <!-- Apply Leave Form -->
-        <div class="content-box">
-            <div class="box-header">
-                <i class="fa-solid fa-pen-to-square"></i> Apply for Leave
-            </div>
-            <form method="POST">
-                <div class="form-grid">
+        <div class="forms-grid">
+            <div class="card">
+                <div class="card-header"><i class="fa-solid fa-user-plus"></i> Add New Employee</div>
+                <form method="POST">
+                    <input type="hidden" name="action_type" value="add_employee">
+                    <div class="form-group"><label>User ID / Employee ID *</label><input type="text" name="user_id" placeholder="e.g. 101" required></div>
+                    <div class="form-group"><label>Password *</label><input type="password" name="password" placeholder="Set Password" required></div>
+                    <div class="form-group"><label>Employee Name *</label><input type="text" name="name" placeholder="Full Name" required></div>
+                    <div class="form-group"><label>Joining Date *</label><input type="date" name="joining_date" required></div>
+                    
                     <div class="form-group">
-                        <label>Leave Type *</label>
-                        <select name="leave_type" id="leaveTypeSelect" onchange="toggleDateFields()" required>
-                            <option value="EL">EL - Earned Leave</option>
-                            <option value="CL">CL - Casual Leave</option>
-                            <option value="EL+CL">Combined EL + CL Leave</option>
-                        </select>
+                        <label>Approving Admins (Select Multiple) *</label>
+                        <div class="checkbox-group">
+                            {% for a in admins_list %}
+                                <label class="checkbox-item">
+                                    <input type="checkbox" name="assigned_admins" value="{{ a['user_id'] }}" checked>
+                                    {{ a['name'] }} ({{ a['user_id'] }})
+                                </label>
+                            {% endfor %}
+                        </div>
                     </div>
 
-                    <div class="form-group single-date-group">
-                        <label>Start Date *</label>
-                        <input type="date" name="start_date" id="singleStart">
+                    <div class="form-group">
+                        <label>Current Remaining Balances (Optional):</label>
+                        <div class="balance-inputs">
+                            <input type="number" name="el" placeholder="Remaining EL (eg: 10)">
+                            <input type="number" name="cl" placeholder="Remaining CL (eg: 5)">
+                        </div>
                     </div>
+                    <button type="submit" class="btn-submit-emp"><i class="fa-solid fa-check-circle"></i> Add Employee</button>
+                </form>
+            </div>
 
-                    <div class="form-group single-date-group">
-                        <label>End Date *</label>
-                        <input type="date" name="end_date" id="singleEnd">
-                    </div>
-                </div>
-
-                <div id="combinedDatesBox" class="custom-dates-box">
-                    <h4 style="font-size: 13px; color: #0056b3; margin-bottom: 10px;">
-                        <i class="fa-solid fa-sliders"></i> Customize EL & CL Dates:
-                    </h4>
-                    <div class="form-grid">
-                        <div class="form-group"><label>EL Start Date *</label><input type="date" name="el_start_date" id="elStart"></div>
-                        <div class="form-group"><label>EL End Date *</label><input type="date" name="el_end_date" id="elEnd"></div>
-                        <div class="form-group"><label>CL Start Date *</label><input type="date" name="cl_start_date" id="clStart"></div>
-                        <div class="form-group"><label>CL End Date *</label><input type="date" name="cl_end_date" id="clEnd"></div>
-                    </div>
-                </div>
-
-                <div class="form-group full-width">
-                    <label>Reason for Leave *</label>
-                    <textarea name="reason" rows="3" placeholder="Enter reason for leave application..." required></textarea>
-                </div>
-
-                <button type="submit" class="btn-submit">
-                    <i class="fa-solid fa-paper-plane"></i> Submit Application
-                </button>
-            </form>
+            <div class="card">
+                <div class="card-header"><i class="fa-solid fa-user-shield"></i> Add New Admin</div>
+                <form method="POST">
+                    <input type="hidden" name="action_type" value="add_admin">
+                    <div class="form-group"><label>Admin User ID *</label><input type="text" name="user_id" placeholder="e.g. ADMIN2" required></div>
+                    <div class="form-group"><label>Admin Password *</label><input type="password" name="password" placeholder="Set Admin Password" required></div>
+                    <div class="form-group"><label>Admin Name *</label><input type="text" name="name" placeholder="Full Name" required></div>
+                    <button type="submit" class="btn-submit-admin" style="margin-top: 140px;"><i class="fa-solid fa-plus-circle"></i> Add Admin</button>
+                </form>
+            </div>
         </div>
 
-        <!-- Applications Table -->
-        <div class="content-box">
-            <div class="box-header">
-                <i class="fa-solid fa-clock-rotate-left"></i> My Leave Applications History
-            </div>
+        <div class="table-box">
+            <div class="card-header"><i class="fa-solid fa-users"></i> Registered Employees List</div>
             <div class="table-responsive">
                 <table>
                     <thead>
                         <tr>
-                            <th>Leave Type</th>
-                            <th>Details / Dates Breakdown</th>
+                            <th>User ID</th>
+                            <th>Employee Name</th>
+                            <th>Joining Date</th>
+                            <th>Approving Admins</th>
+                            <th>EL Balance</th>
+                            <th>CL Balance</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if users_list %}
+                            {% for u in users_list %}
+                            <tr>
+                                <td><b>{{ u['user_id'] }}</b></td>
+                                <td>{{ u['name'] }}</td>
+                                <td>{{ u['joining_date'] if u['joining_date'] else '-' }}</td>
+                                <td>{{ u['assigned_admin'] }}</td>
+                                <td><b style="color: #0056b3;">{{ u['el_balance'] }}</b></td>
+                                <td><b style="color: #10b981;">{{ u['cl_balance'] }}</b></td>
+                                <td>
+                                    <a href="/delete_user/{{ u['user_id'] }}" class="btn-delete-user" onclick="return confirm('कर्मचाऱ्याचा अकाऊंट डिलीट करायचा का?');"><i class="fa-solid fa-user-xmark"></i> Delete</a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr><td colspan="7" style="text-align: center; color: #777;">कोणतेही कर्मचारी जोडलेले नाहीत.</td></tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="table-box">
+            <div class="card-header"><i class="fa-solid fa-list-check"></i> Employee Leave Applications</div>
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>User ID</th>
+                            <th>Employee Name</th>
+                            <th>Type</th>
+                            <th>Dates Breakdown</th>
                             <th>Reason</th>
                             <th>Status</th>
-                            <th>Approved / Action By</th>
+                            <th>Action By / Approver</th>
                             <th>Action</th>
                         </tr>
                     </thead>
@@ -174,45 +189,54 @@
                         {% if requests %}
                             {% for req in requests %}
                             <tr>
-                                <td><b>{{ req[1] }}</b></td>
+                                <td><b>{{ req['user_id'] }}</b></td>
+                                <td>{{ req['user_name'] }}</td>
+                                <td><b>{{ req['leave_type'] }}</b></td>
                                 <td>
-                                    {% if req[1] == 'EL+CL' %}
-                                        <small style="display:block;"><b>EL:</b> {{ req[4] }}</small>
-                                        <small style="display:block;"><b>CL:</b> {{ req[5] }}</small>
+                                    {% if req['leave_type'] == 'EL+CL' %}
+                                        <small style="display:block;"><b>EL:</b> {{ req['el_dates'] }}</small>
+                                        <small style="display:block;"><b>CL:</b> {{ req['cl_dates'] }}</small>
                                     {% else %}
-                                        {{ req[2] }} to {{ req[3] }}
+                                        {{ req['start_date'] }} to {{ req['end_date'] }}
                                     {% endif %}
                                 </td>
-                                <td>{{ req[6] }}</td>
+                                <td>{{ req['reason'] }}</td>
                                 <td>
-                                    {% if req[7] == 'Approved' %}
-                                        <span class="badge badge-approved">Approved</span>
-                                    {% elif req[7] == 'Pending' %}
-                                        <span class="badge badge-pending">Pending</span>
-                                    {% elif req[7] == 'Rejected' %}
-                                        <span class="badge badge-rejected">Rejected</span>
+                                    {% if req['status'] == 'Approved' %}
+                                        <span class="badge-approved">Approved</span>
+                                    {% elif req['status'] == 'Pending' %}
+                                        <span class="badge-pending">Pending</span>
+                                    {% elif req['status'] == 'Rejected' %}
+                                        <span class="badge-rejected">Rejected</span>
                                     {% else %}
-                                        <span class="badge badge-cancelled">Cancelled</span>
-                                    {% endif %}
-                                </td>
-                                <td>
-                                    {% if req[8] %}
-                                        <small style="color: #0056b3; font-weight: bold;">{{ req[8] }}</small>
-                                    {% else %}
-                                        -
+                                        <span class="badge-cancelled">Cancelled</span>
                                     {% endif %}
                                 </td>
                                 <td>
-                                    {% if req[7] != 'Cancelled' and req[7] != 'Rejected' %}
-                                        <a href="/cancel_leave/{{ req[0] }}" class="btn-cancel" onclick="return confirm('तुम्हाला ही रजा रद्द करायची आहे का?');">Cancel</a>
+                                    {% if req['approved_by'] %}
+                                        <small style="color: #0056b3; font-weight: bold;">{{ req['approved_by'] }}</small>
                                     {% else %}
-                                        -
+                                        <span class="badge-assigned-other">Pending with {{ req['assigned_admin'] }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if current_admin in req['assigned_admin'].split(',') or current_admin == 'ADMIN1' %}
+                                        {% if req['status'] == 'Pending' %}
+                                            <a href="/action/{{ req['id'] }}/Approved" class="btn-action-approve"><i class="fa-solid fa-check"></i> Approve</a>
+                                            <a href="/action/{{ req['id'] }}/Rejected" class="btn-action-reject"><i class="fa-solid fa-xmark"></i> Reject</a>
+                                        {% elif req['status'] == 'Approved' %}
+                                            <a href="/cancel_leave/{{ req['id'] }}" class="btn-action-cancel" onclick="return confirm('ही मंजूर झालेली रजा रद्द करायची का?');">Cancel Approval</a>
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    {% else %}
+                                        <span style="color: #94a3b8; font-size: 11px;">Restricted</span>
                                     {% endif %}
                                 </td>
                             </tr>
                             {% endfor %}
                         {% else %}
-                            <tr><td colspan="6" style="text-align: center; color: #777;">नो रेकॉर्ड सापडले नाहीत.</td></tr>
+                            <tr><td colspan="8" style="text-align: center; color: #777;">कोणतेही अर्ज उपलब्ध नाहीत.</td></tr>
                         {% endif %}
                     </tbody>
                 </table>
@@ -224,42 +248,5 @@
         © Konkan Railway Corporation Ltd. (A Government of India Undertaking). All rights reserved.
     </footer>
 
-    <script>
-        function toggleDateFields() {
-            const leaveType = document.getElementById('leaveTypeSelect').value;
-            const singleGroups = document.querySelectorAll('.single-date-group');
-            const combinedBox = document.getElementById('combinedDatesBox');
-
-            const singleStart = document.getElementById('singleStart');
-            const singleEnd = document.getElementById('singleEnd');
-            const elStart = document.getElementById('elStart');
-            const elEnd = document.getElementById('elEnd');
-            const clStart = document.getElementById('clStart');
-            const clEnd = document.getElementById('clEnd');
-
-            if (leaveType === 'EL+CL') {
-                singleGroups.forEach(el => el.style.display = 'none');
-                combinedBox.style.display = 'block';
-
-                singleStart.removeAttribute('required');
-                singleEnd.removeAttribute('required');
-                elStart.setAttribute('required', 'required');
-                elEnd.setAttribute('required', 'required');
-                clStart.setAttribute('required', 'required');
-                clEnd.setAttribute('required', 'required');
-            } else {
-                singleGroups.forEach(el => el.style.display = 'flex');
-                combinedBox.style.display = 'none';
-
-                singleStart.setAttribute('required', 'required');
-                singleEnd.setAttribute('required', 'required');
-                elStart.removeAttribute('required');
-                elEnd.removeAttribute('required');
-                clStart.removeAttribute('required');
-                clEnd.removeAttribute('required');
-            }
-        }
-        toggleDateFields();
-    </script>
 </body>
 </html>
