@@ -18,92 +18,96 @@ def get_db_connection():
     conn = psycopg2.connect(db_url)
     return conn
 
-# PDF मधील सर्व ५९ कर्मचाऱ्यांची यादी (Signal & Tele SSC Assignment सह)
+# 1. ADMINS LIST (Page 2 SSE Staff Only - Page 1 Officers Removed)
+PDF_ADMINS = [
+    ('80342', 'MNas@8034', 'Mohammad Nasier Zarger', 'SSE/Store'),
+    ('7342', 'NCha@7342', 'Nayan S Chaudhari', 'SSE/Sig/Incharge/SGDN'),
+    ('7347', 'MShi@7347', 'Mayur D Shilame', 'SSE/Telecom/Incharge/SGDN'),
+    ('80983', 'VSha@8098', 'Vipul Sharma', 'SSE/SIGNAL'),
+    ('80888', 'NKot@8088', 'Nihal Kotwal', 'SSE/SIGNAL')
+]
+
+# 2. EMPLOYEES LIST (JE, Tech, Helpers, Clerks)
 PDF_EMPLOYEES = [
-    # Page 2: SSE & JE
-    ('80342', 'MNas@8034', 'Mohammad Nasier Zarger', 'SSE/Store', 'ADMIN_SIGNAL', ''),
-    ('7342', 'NCha@7342', 'Nayan S Chaudhari', 'SSE/Sig/Incharge/SGDN', 'ADMIN_SIGNAL', ''),
-    ('7347', 'MShi@7347', 'Mayur D Shilame', 'SSE/Telecom/Incharge/SGDN', 'ADMIN_TELE', ''),
-    ('80983', 'VSha@8098', 'Vipul Sharma', 'SSE/SIGNAL', 'ADMIN_SIGNAL', ''),
-    ('80888', 'NKot@8088', 'Nihal Kotwal', 'SSE/SIGNAL', 'ADMIN_SIGNAL', ''),
-    ('80647', 'PDog@8064', 'Pankaj Dogra', 'JE/TELE', 'ADMIN_TELE', ''),
-    ('80625', 'GMan@8062', 'Gagandeep Manhas', 'JE/TELE', 'ADMIN_TELE', ''),
-    ('80630', 'VShi@8063', 'Vishal Shivgotra', 'JE/TELE', 'ADMIN_TELE', ''),
-    ('80881', 'VLan@8088', 'Vishal Langeh', 'JE/TELE', 'ADMIN_TELE', ''),
-    ('81335', 'RLan@8133', 'Robin Langeh', 'JE/TELE', 'ADMIN_TELE', ''),
-    ('81346', 'RBha@8134', 'Reyaz Ahmed Bhat', 'JE/TELE', 'ADMIN_TELE', ''),
-    ('81340', 'ASin@8134', 'Akash Dev Singh', 'JE/TELE', 'ADMIN_TELE', ''),
-    ('81338', 'IKum@8133', 'Ishfaq Ahmad Kumar', 'JE/TELE', 'ADMIN_TELE', ''),
-    ('81362', 'IHas@8136', 'Ishfaq Hassan', 'JE/TELE', 'ADMIN_TELE', ''),
-    ('81348', 'ASha@8134', 'Aqib Javed Shah', 'JE/TELE', 'ADMIN_TELE', ''),
-    ('81356', 'BSin@8135', 'S Baljeet Singh', 'JE/TELE', 'ADMIN_TELE', ''),
-    ('81366', 'SSha@8136', 'Shubam Sharma', 'JE/TELE', 'ADMIN_TELE', ''),
-    ('81309', 'NVas@8130', 'Nikunj Vashisth', 'JE/TELE', 'ADMIN_TELE', ''),
+    # Page 2: JE Staff
+    ('80647', 'PDog@8064', 'Pankaj Dogra', 'JE/TELE', '7347'),
+    ('80625', 'GMan@8062', 'Gagandeep Manhas', 'JE/TELE', '7347'),
+    ('80630', 'VShi@8063', 'Vishal Shivgotra', 'JE/TELE', '7347'),
+    ('80881', 'VLan@8088', 'Vishal Langeh', 'JE/TELE', '7347'),
+    ('81335', 'RLan@8133', 'Robin Langeh', 'JE/TELE', '7347'),
+    ('81346', 'RBha@8134', 'Reyaz Ahmed Bhat', 'JE/TELE', '7347'),
+    ('81340', 'ASin@8134', 'Akash Dev Singh', 'JE/TELE', '7347'),
+    ('81338', 'IKum@8133', 'Ishfaq Ahmad Kumar', 'JE/TELE', '7347'),
+    ('81362', 'IHas@8136', 'Ishfaq Hassan', 'JE/TELE', '7347'),
+    ('81348', 'ASha@8134', 'Aqib Javed Shah', 'JE/TELE', '7347'),
+    ('81356', 'BSin@8135', 'S Baljeet Singh', 'JE/TELE', '7347'),
+    ('81366', 'SSha@8136', 'Shubam Sharma', 'JE/TELE', '7347'),
+    ('81309', 'NVas@8130', 'Nikunj Vashisth', 'JE/TELE', '7347'),
 
     # Page 3 & 4: Technicians
-    ('81359', 'RPan@8135', 'Rishav Pandey', 'Tech - Tele', 'ADMIN_TELE', ''),
-    ('81311', 'ABlo@8131', 'Abhishek Bloch', 'Tech - Signal', 'ADMIN_SIGNAL', ''),
-    ('81341', 'SKum@8134', 'Shravan Kumar', 'Tech - Signal', 'ADMIN_SIGNAL', ''),
-    ('81339', 'AJam@8133', 'Aditya Singh Jamwal', 'Tech - Signal', 'ADMIN_SIGNAL', ''),
-    ('81373', 'TCha@8137', 'Tejas Vinayak Chavan', 'Tech - Signal', 'ADMIN_SIGNAL', ''),
-    ('81375', 'AVER@8137', 'Abhishek Kumar Verma', 'Tech - Signal', 'ADMIN_SIGNAL', ''),
-    ('81384', 'SSha@8138', 'Sahil Sharma', 'Tech - Tele', 'ADMIN_TELE', ''),
-    ('81365', 'OPra@8136', 'Om Singh Prajapati', 'Tech - Signal', 'ADMIN_SIGNAL', ''),
-    ('81342', 'RRaj@8134', 'Rahul Raj', 'Tech - Signal', 'ADMIN_SIGNAL', ''),
-    ('81378', 'SKum@8137', 'Sagar Kumar', 'Tech - Tele', 'ADMIN_TELE', ''),
-    ('81334', 'MAhm@8133', 'Mudasar Ahmed', 'Tech - Tele', 'ADMIN_TELE', ''),
-    ('81370', 'AAry@8137', 'Anil Arya', 'Tech - Tele', 'ADMIN_TELE', ''),
-    ('81349', 'MSaj@8134', 'Maanil Sajgotra', 'Tech - Signal', 'ADMIN_SIGNAL', ''),
-    ('81372', 'MHus@8137', 'Madsar Hussain', 'Tech - Signal', 'ADMIN_SIGNAL', ''),
-    ('81363', 'SSha@8136', 'Sidharth Sharma', 'Tech - Signal', 'ADMIN_SIGNAL', ''),
-    ('81371', 'VKum@8137', 'Vijay Kumar', 'Tech - Tele', 'ADMIN_TELE', ''),
-    ('81364', 'SKal@8136', 'Sahil Kalsi', 'Tech - Tele', 'ADMIN_TELE', ''),
-    ('81376', 'SSha@8137', 'Sarthak Sharma', 'Tech - Tele', 'ADMIN_TELE', ''),
-    ('81345', 'DKum@8134', 'Deep Kumar', 'Tech - Signal', 'ADMIN_SIGNAL', ''),
-    ('81343', 'RDam@8134', 'Rohan Jitendra Damodar', 'Tech - Signal', 'ADMIN_SIGNAL', ''),
-    ('81382', 'HKal@8138', 'Hariom Narayan Kale', 'Tech - Signal', 'ADMIN_SIGNAL', ''),
-    ('81377', 'RKum@8137', 'Romesh Kumar', 'Tech - Tele', 'ADMIN_TELE', ''),
-    ('81358', 'MAfz@8135', 'Mohd Afzal', 'Tech - Tele', 'ADMIN_TELE', ''),
-    ('81368', 'RKal@8136', 'Raghav Kalsa', 'Tech - Signal', 'ADMIN_SIGNAL', ''),
-    ('81353', 'NSud@8135', 'Nandish Sudan', 'Tech - Signal', 'ADMIN_SIGNAL', ''),
-    ('81361', 'HKum@8136', 'Himanshu Kumar', 'Tech - Signal', 'ADMIN_SIGNAL', ''),
-    ('81385', 'MCha@8138', 'Munish Chalotra', 'Tech - Tele', 'ADMIN_TELE', ''),
-    ('81333', 'RSha@8133', 'Rohit Sharma', 'Tech - Signal', 'ADMIN_SIGNAL', ''),
-    ('81354', 'RTha@8135', 'Ravisankar Thakur', 'Tech - Signal', 'ADMIN_SIGNAL', ''),
-    ('80629', 'KNid@8062', 'Karun Nidhan', 'Tech - Tele', 'ADMIN_TELE', ''),
-    ('80631', 'SSha@8063', 'Sahil Sharma', 'Tech - Tele', 'ADMIN_TELE', ''),
-    ('80614', 'SSin@8061', 'Sunil Singh', 'Tech - Signal', 'ADMIN_SIGNAL', ''),
-    ('80616', 'Nour@8061', 'Nourattan', 'Tech - Signal', 'ADMIN_SIGNAL', ''),
-    ('80617', 'DSha@8061', 'Deep Sharma', 'Tech - Signal', 'ADMIN_SIGNAL', ''),
+    ('81359', 'RPan@8135', 'Rishav Pandey', 'Tech - Tele', '7347'),
+    ('81311', 'ABlo@8131', 'Abhishek Bloch', 'Tech - Signal', '7342'),
+    ('81341', 'SKum@8134', 'Shravan Kumar', 'Tech - Signal', '7342'),
+    ('81339', 'AJam@8133', 'Aditya Singh Jamwal', 'Tech - Signal', '7342'),
+    ('81373', 'TCha@8137', 'Tejas Vinayak Chavan', 'Tech - Signal', '7342'),
+    ('81375', 'AVER@8137', 'Abhishek Kumar Verma', 'Tech - Signal', '7342'),
+    ('81384', 'SSha@8138', 'Sahil Sharma', 'Tech - Tele', '7347'),
+    ('81365', 'OPra@8136', 'Om Singh Prajapati', 'Tech - Signal', '7342'),
+    ('81342', 'RRaj@8134', 'Rahul Raj', 'Tech - Signal', '7342'),
+    ('81378', 'SKum@8137', 'Sagar Kumar', 'Tech - Tele', '7347'),
+    ('81334', 'MAhm@8133', 'Mudasar Ahmed', 'Tech - Tele', '7347'),
+    ('81370', 'AAry@8137', 'Anil Arya', 'Tech - Tele', '7347'),
+    ('81349', 'MSaj@8134', 'Maanil Sajgotra', 'Tech - Signal', '7342'),
+    ('81372', 'MHus@8137', 'Madsar Hussain', 'Tech - Signal', '7342'),
+    ('81363', 'SSha@8136', 'Sidharth Sharma', 'Tech - Signal', '7342'),
+    ('81371', 'VKum@8137', 'Vijay Kumar', 'Tech - Tele', '7347'),
+    ('81364', 'SKal@8136', 'Sahil Kalsi', 'Tech - Tele', '7347'),
+    ('81376', 'SSha@8137', 'Sarthak Sharma', 'Tech - Tele', '7347'),
+    ('81345', 'DKum@8134', 'Deep Kumar', 'Tech - Signal', '7342'),
+    ('81343', 'RDam@8134', 'Rohan Jitendra Damodar', 'Tech - Signal', '7342'),
+    ('81382', 'HKal@8138', 'Hariom Narayan Kale', 'Tech - Signal', '7342'),
+    ('81377', 'RKum@8137', 'Romesh Kumar', 'Tech - Tele', '7347'),
+    ('81358', 'MAfz@8135', 'Mohd Afzal', 'Tech - Tele', '7347'),
+    ('81368', 'RKal@8136', 'Raghav Kalsa', 'Tech - Signal', '7342'),
+    ('81353', 'NSud@8135', 'Nandish Sudan', 'Tech - Signal', '7342'),
+    ('81361', 'HKum@8136', 'Himanshu Kumar', 'Tech - Signal', '7342'),
+    ('81385', 'MCha@8138', 'Munish Chalotra', 'Tech - Tele', '7347'),
+    ('81333', 'RSha@8133', 'Rohit Sharma', 'Tech - Signal', '7342'),
+    ('81354', 'RTha@8135', 'Ravisankar Thakur', 'Tech - Signal', '7342'),
+    ('80629', 'KNid@8062', 'Karun Nidhan', 'Tech - Tele', '7347'),
+    ('80631', 'SSha@8063', 'Sahil Sharma', 'Tech - Tele', '7347'),
+    ('80614', 'SSin@8061', 'Sunil Singh', 'Tech - Signal', '7342'),
+    ('80616', 'Nour@8061', 'Nourattan', 'Tech - Signal', '7342'),
+    ('80617', 'DSha@8061', 'Deep Sharma', 'Tech - Signal', '7342'),
 
     # Page 5: Helpers & Clerks
-    ('TCS_JK_067', 'MSin@0067', 'Manjeet Singh', 'Store Clerk', 'ADMIN_SIGNAL', ''),
-    ('TCS_JK_068', 'NAtt@0068', 'Neeraj Attri', 'Store Clerk', 'ADMIN_SIGNAL', ''),
-    ('TCS_JK_002', 'NSin@0002', 'Narendra Chanchal Dev Singh', 'Blacksmith', 'ADMIN_SIGNAL', ''),
-    ('TCS_JK_001', 'KSin@0001', 'Kaveet Singh', 'Blacksmith', 'ADMIN_SIGNAL', ''),
-    ('TCS_JK_063', 'SKum@0063', 'Sandeep Kumar', 'Helper - Signal', 'ADMIN_SIGNAL', ''),
-    ('TCS_JK_060', 'MAhm@0060', 'Mudasar Ahmed', 'Helper - Signal', 'ADMIN_SIGNAL', ''),
-    ('TCS_JK_058', 'YAhm@0058', 'Yaseen Ahmed', 'Helper - Signal', 'ADMIN_SIGNAL', ''),
-    ('TCS_JK_065', 'SSin@0065', 'Sunder Singh', 'Helper - Signal', 'ADMIN_SIGNAL', ''),
-    ('TCS_JK_053', 'ASha@0053', 'Ankush Sharma', 'Helper - Signal', 'ADMIN_SIGNAL', ''),
-    ('TCS_JK_061', 'MKum@0061', 'Mukesh Kumar', 'Helper - Signal', 'ADMIN_SIGNAL', ''),
-    ('TCS_JK_055', 'DSin@0055', 'Dalip Singh', 'Helper - Signal', 'ADMIN_SIGNAL', ''),
-    ('TCS_JK_052', 'ASin@0052', 'Akhil Singh', 'Helper - Signal', 'ADMIN_SIGNAL', ''),
-    ('TCS_JK_066', 'SKum@0066', 'Suresh Kumar', 'Helper - Signal', 'ADMIN_SIGNAL', ''),
-    ('TCS_JK_054', 'AKum@0054', 'Ashok kumar', 'Helper - Signal', 'ADMIN_SIGNAL', ''),
-    ('TCS_JK_059', 'MAsl@0059', 'Mohd. Aslam', 'Helper - Signal', 'ADMIN_SIGNAL', ''),
-    ('TCS_JK_062', 'SKal@0062', 'Sahil Kalhotra', 'Helper - Signal', 'ADMIN_SIGNAL', ''),
-    ('TCS_JK_064', 'Sanj@0064', 'Sanjay', 'Helper - Signal', 'ADMIN_SIGNAL', ''),
-    ('TCS_JK_056', 'GSin@0056', 'Gourav Singh', 'Helper - Signal', 'ADMIN_SIGNAL', ''),
-    ('TCS_JK_057', 'MKum@0057', 'Manjeet Kumar', 'Helper - Signal', 'ADMIN_SIGNAL', ''),
-    ('TCS_JK_073', 'PCha@0073', 'Pritam chand', 'Helper - Telecom', 'ADMIN_TELE', ''),
-    ('TCS_JK_070', 'MAfz@0070', 'Mohd Afzal', 'Helper - Telecom', 'ADMIN_TELE', ''),
-    ('TCS_JK_075', 'RKum@0075', 'Ravi Kumar', 'Helper - Telecom', 'ADMIN_TELE', ''),
-    ('TCS_JK_076', 'RKha@0076', 'Reyees Ahmed Khan', 'Helper - Telecom', 'ADMIN_TELE', ''),
-    ('TCS_JK_069', 'ABac@0069', 'Amitab Bachan', 'Helper - Telecom', 'ADMIN_TELE', ''),
-    ('TCS_JK_072', 'PAhm@0072', 'Pervez Ahmed', 'Helper - Telecom', 'ADMIN_TELE', ''),
-    ('TCS_JK_074', 'RSin@0074', 'Rakesh Singh', 'Helper - Telecom', 'ADMIN_TELE', ''),
-    ('TCS_JK_071', 'MPar@0071', 'Mohd Parvez', 'Helper - Telecom', 'ADMIN_TELE', '')
+    ('TCS_JK_067', 'MSin@0067', 'Manjeet Singh', 'Store Clerk', '7342'),
+    ('TCS_JK_068', 'NAtt@0068', 'Neeraj Attri', 'Store Clerk', '7342'),
+    ('TCS_JK_002', 'NSin@0002', 'Narendra Chanchal Dev Singh', 'Blacksmith', '7342'),
+    ('TCS_JK_001', 'KSin@0001', 'Kaveet Singh', 'Blacksmith', '7342'),
+    ('TCS_JK_063', 'SKum@0063', 'Sandeep Kumar', 'Helper - Signal', '7342'),
+    ('TCS_JK_060', 'MAhm@0060', 'Mudasar Ahmed', 'Helper - Signal', '7342'),
+    ('TCS_JK_058', 'YAhm@0058', 'Yaseen Ahmed', 'Helper - Signal', '7342'),
+    ('TCS_JK_065', 'SSin@0065', 'Sunder Singh', 'Helper - Signal', '7342'),
+    ('TCS_JK_053', 'ASha@0053', 'Ankush Sharma', 'Helper - Signal', '7342'),
+    ('TCS_JK_061', 'MKum@0061', 'Mukesh Kumar', 'Helper - Signal', '7342'),
+    ('TCS_JK_055', 'DSin@0055', 'Dalip Singh', 'Helper - Signal', '7342'),
+    ('TCS_JK_052', 'ASin@0052', 'Akhil Singh', 'Helper - Signal', '7342'),
+    ('TCS_JK_066', 'SKum@0066', 'Suresh Kumar', 'Helper - Signal', '7342'),
+    ('TCS_JK_054', 'AKum@0054', 'Ashok kumar', 'Helper - Signal', '7342'),
+    ('TCS_JK_059', 'MAsl@0059', 'Mohd. Aslam', 'Helper - Signal', '7342'),
+    ('TCS_JK_062', 'SKal@0062', 'Sahil Kalhotra', 'Helper - Signal', '7342'),
+    ('TCS_JK_064', 'Sanj@0064', 'Sanjay', 'Helper - Signal', '7342'),
+    ('TCS_JK_056', 'GSin@0056', 'Gourav Singh', 'Helper - Signal', '7342'),
+    ('TCS_JK_057', 'MKum@0057', 'Manjeet Kumar', 'Helper - Signal', '7342'),
+    ('TCS_JK_073', 'PCha@0073', 'Pritam chand', 'Helper - Telecom', '7347'),
+    ('TCS_JK_070', 'MAfz@0070', 'Mohd Afzal', 'Helper - Telecom', '7347'),
+    ('TCS_JK_075', 'RKum@0075', 'Ravi Kumar', 'Helper - Telecom', '7347'),
+    ('TCS_JK_076', 'RKha@0076', 'Reyees Ahmed Khan', 'Helper - Telecom', '7347'),
+    ('TCS_JK_069', 'ABac@0069', 'Amitab Bachan', 'Helper - Telecom', '7347'),
+    ('TCS_JK_072', 'PAhm@0072', 'Pervez Ahmed', 'Helper - Telecom', '7347'),
+    ('TCS_JK_074', 'RSin@0074', 'Rakesh Singh', 'Helper - Telecom', '7347'),
+    ('TCS_JK_071', 'MPar@0071', 'Mohd Parvez', 'Helper - Telecom', '7347')
 ]
 
 def init_db():
@@ -145,7 +149,7 @@ def init_db():
 
         migrations = [
             "ALTER TABLE users ADD COLUMN IF NOT EXISTS designation VARCHAR(100) DEFAULT '';",
-            "ALTER TABLE users ADD COLUMN IF NOT EXISTS assigned_admin TEXT DEFAULT 'ADMIN_SIGNAL';",
+            "ALTER TABLE users ADD COLUMN IF NOT EXISTS assigned_admin TEXT DEFAULT '7342';",
             "ALTER TABLE users ADD COLUMN IF NOT EXISTS joining_date VARCHAR(20) DEFAULT '';",
             "ALTER TABLE users ADD COLUMN IF NOT EXISTS el_balance INT DEFAULT 0;",
             "ALTER TABLE users ADD COLUMN IF NOT EXISTS cl_balance INT DEFAULT 0;",
@@ -163,30 +167,29 @@ def init_db():
             except Exception as e:
                 conn.rollback()
 
-        # Signal & Tele SSC Admins
-        admins = [
-            ('ADMIN_SIGNAL', 'sig123', 'Signal SSC Admin', 'SSC (Signal)', 'admin', 'ADMIN_SIGNAL', ''),
-            ('ADMIN_TELE', 'tele123', 'Telecom SSC Admin', 'SSC (Telecom)', 'admin', 'ADMIN_TELE', '')
-        ]
-        
-        for a_id, pwd, name, desig, role, a_admin, j_date in admins:
+        # Remove old Page 1 Admins if they exist in DB
+        cursor.execute("DELETE FROM users WHERE user_id IN ('3461', '4224', '7059', '5509');")
+        conn.commit()
+
+        # 1. Insert ALL Valid Admins
+        for a_id, pwd, name, desig in PDF_ADMINS:
             cursor.execute('''
                 INSERT INTO users (user_id, password, name, designation, role, assigned_admin, joining_date) 
-                VALUES (%s, %s, %s, %s, %s, %s, %s) 
-                ON CONFLICT (user_id) DO NOTHING;
-            ''', (a_id, pwd, name, desig, role, a_admin, j_date))
+                VALUES (%s, %s, %s, %s, 'admin', %s, '') 
+                ON CONFLICT (user_id) DO UPDATE SET password = EXCLUDED.password, role = 'admin', designation = EXCLUDED.designation;
+            ''', (a_id, pwd, name, desig, a_id))
 
-        # Auto-Insert PDF Employees with Signal / Tele mapping
+        # 2. Insert ALL Employees
         today = datetime.now()
         half = 1 if today.month <= 6 else 2
         half_key = int(f"{today.year}{half}")
 
-        for u_id, pwd, name, desig, a_admin, j_date in PDF_EMPLOYEES:
+        for u_id, pwd, name, desig, a_admin in PDF_EMPLOYEES:
             cursor.execute('''
                 INSERT INTO users (user_id, password, name, designation, role, assigned_admin, joining_date, el_balance, cl_balance, last_el_update, last_cl_update) 
-                VALUES (%s, %s, %s, %s, 'employee', %s, %s, 15, 8, %s, %s) 
-                ON CONFLICT (user_id) DO UPDATE SET password = EXCLUDED.password, name = EXCLUDED.name, designation = EXCLUDED.designation, assigned_admin = EXCLUDED.assigned_admin;
-            ''', (u_id, pwd, name, desig, a_admin, j_date, half_key, today.year))
+                VALUES (%s, %s, %s, %s, 'employee', %s, '', 15, 8, %s, %s) 
+                ON CONFLICT (user_id) DO UPDATE SET password = EXCLUDED.password, name = EXCLUDED.name, designation = EXCLUDED.designation, role = 'employee', assigned_admin = EXCLUDED.assigned_admin;
+            ''', (u_id, pwd, name, desig, a_admin, half_key, today.year))
 
         conn.commit()
         cursor.close()
@@ -336,7 +339,7 @@ def edit_user():
         joining_date = request.form.get('joining_date', '')
         
         selected_admins = request.form.getlist('assigned_admins')
-        assigned_admin_str = ",".join(selected_admins) if selected_admins else 'ADMIN_SIGNAL'
+        assigned_admin_str = ",".join(selected_admins) if selected_admins else '7342'
         
         conn = get_db_connection()
         cursor = conn.cursor()
@@ -525,7 +528,7 @@ def action(req_id, status):
             
             assigned_list = [a.strip() for a in assigned_admin.split(',')] if assigned_admin else []
             
-            if session['user_id'] in assigned_list or session['user_id'] == 'ADMIN_SIGNAL' or session['user_id'] == 'ADMIN_TELE':
+            if session['user_id'] in assigned_list or session['user_id'] in ['80342', '7342', '7347', '80983', '80888']:
                 now_str = datetime.now().strftime("%d-%b-%Y %I:%M %p")
                 approver_info = f"{session['name']} ({session['user_id']}) at {now_str}"
                 
