@@ -87,6 +87,7 @@
         <h2 class="page-title">S&T Portal - Admin Control Center</h2>
 
         <div class="forms-grid">
+            <!-- Add Employee Form -->
             <div class="card">
                 <div class="card-header"><i class="fa-solid fa-user-plus"></i> Add New Employee</div>
                 <form method="POST">
@@ -94,6 +95,7 @@
                     <div class="form-group"><label>User ID / Employee ID *</label><input type="text" name="user_id" placeholder="e.g. 101" required></div>
                     <div class="form-group"><label>Password *</label><input type="password" name="password" placeholder="Set Password" required></div>
                     <div class="form-group"><label>Employee Name *</label><input type="text" name="name" placeholder="Full Name" required></div>
+                    <div class="form-group"><label>Designation / पद *</label><input type="text" name="designation" placeholder="e.g. Technician-3, SSE, JE" required></div>
                     <div class="form-group"><label>Joining Date *</label><input type="date" name="joining_date" required></div>
                     
                     <div class="form-group">
@@ -119,6 +121,7 @@
                 </form>
             </div>
 
+            <!-- Add Admin Form -->
             <div class="card">
                 <div class="card-header"><i class="fa-solid fa-user-shield"></i> Add New Admin</div>
                 <form method="POST">
@@ -126,11 +129,13 @@
                     <div class="form-group"><label>Admin User ID *</label><input type="text" name="user_id" placeholder="e.g. ADMIN2" required></div>
                     <div class="form-group"><label>Admin Password *</label><input type="password" name="password" placeholder="Set Admin Password" required></div>
                     <div class="form-group"><label>Admin Name *</label><input type="text" name="name" placeholder="Full Name" required></div>
-                    <button type="submit" class="btn-submit-admin" style="margin-top: 140px;"><i class="fa-solid fa-plus-circle"></i> Add Admin</button>
+                    <div class="form-group"><label>Admin Designation *</label><input type="text" name="designation" placeholder="e.g. SSE (S&T), ASTE" value="S&T Admin"></div>
+                    <button type="submit" class="btn-submit-admin" style="margin-top: 105px;"><i class="fa-solid fa-plus-circle"></i> Add Admin</button>
                 </form>
             </div>
         </div>
 
+        <!-- Registered Employees Table -->
         <div class="table-box">
             <div class="card-header"><i class="fa-solid fa-users"></i> Registered Employees List</div>
             <div class="table-responsive">
@@ -139,6 +144,7 @@
                         <tr>
                             <th>User ID</th>
                             <th>Employee Name</th>
+                            <th>Designation</th>
                             <th>Joining Date</th>
                             <th>Approving Admins</th>
                             <th>EL Balance</th>
@@ -152,6 +158,7 @@
                             <tr>
                                 <td><b>{{ u['user_id'] }}</b></td>
                                 <td>{{ u['name'] }}</td>
+                                <td><span style="color: #0056b3; font-weight: bold;">{{ u['designation'] if u['designation'] else '-' }}</span></td>
                                 <td>{{ u['joining_date'] if u['joining_date'] else '-' }}</td>
                                 <td>{{ u['assigned_admin'] }}</td>
                                 <td><b style="color: #0056b3;">{{ u['el_balance'] }}</b></td>
@@ -162,13 +169,14 @@
                             </tr>
                             {% endfor %}
                         {% else %}
-                            <tr><td colspan="7" style="text-align: center; color: #777;">कोणतेही कर्मचारी जोडलेले नाहीत.</td></tr>
+                            <tr><td colspan="8" style="text-align: center; color: #777;">कोणतेही कर्मचारी जोडलेले नाहीत.</td></tr>
                         {% endif %}
                     </tbody>
                 </table>
             </div>
         </div>
 
+        <!-- Leave Requests Table -->
         <div class="table-box">
             <div class="card-header"><i class="fa-solid fa-list-check"></i> Employee Leave Applications</div>
             <div class="table-responsive">
@@ -176,7 +184,7 @@
                     <thead>
                         <tr>
                             <th>User ID</th>
-                            <th>Employee Name</th>
+                            <th>Employee Name & Designation</th>
                             <th>Type</th>
                             <th>Dates Breakdown</th>
                             <th>Reason</th>
@@ -190,7 +198,12 @@
                             {% for req in requests %}
                             <tr>
                                 <td><b>{{ req['user_id'] }}</b></td>
-                                <td>{{ req['user_name'] }}</td>
+                                <td>
+                                    <b>{{ req['user_name'] }}</b>
+                                    {% if req['user_designation'] %}
+                                        <br><small style="color: #0056b3;">({{ req['user_designation'] }})</small>
+                                    {% endif %}
+                                </td>
                                 <td><b>{{ req['leave_type'] }}</b></td>
                                 <td>
                                     {% if req['leave_type'] == 'EL+CL' %}
