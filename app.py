@@ -1,5 +1,6 @@
 import os
 import psycopg2
+from psycopg2.extras import RealDictCursor
 from datetime import datetime
 from flask import Flask, render_template, request, redirect, url_for, session
 
@@ -18,66 +19,73 @@ def get_db_connection():
     return conn
 
 def init_db():
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS users (
-            user_id VARCHAR(50) PRIMARY KEY,
-            password VARCHAR(100) NOT NULL,
-            name VARCHAR(100) NOT NULL,
-            role VARCHAR(20) NOT NULL,
-            assigned_admin TEXT,
-            joining_date VARCHAR(20),
-            el_balance INT DEFAULT 0,
-            cl_balance INT DEFAULT 0,
-            last_el_update INT DEFAULT 0,
-            last_cl_update INT DEFAULT 0
-        );
-    ''')
-    
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS leave_requests (
-            id SERIAL PRIMARY KEY,
-            user_id VARCHAR(50) NOT NULL,
-            leave_type VARCHAR(50) NOT NULL,
-            start_date VARCHAR(20) NOT NULL,
-            end_date VARCHAR(20) NOT NULL,
-            el_dates VARCHAR(50) DEFAULT '',
-            cl_dates VARCHAR(50) DEFAULT '',
-            reason TEXT NOT NULL,
-            status VARCHAR(20) DEFAULT 'Pending',
-            approved_by VARCHAR(100) DEFAULT ''
-        );
-    ''')
-    
-    # Auto-Migration for missing columns (Safe Executions)
-    columns_to_add = [
-        ("users", "assigned_admin TEXT"),
-        ("users", "joining_date VARCHAR(20)"),
-        ("users", "last_el_update INT DEFAULT 0"),
-        ("users", "last_cl_update INT DEFAULT 0"),
-        ("leave_requests", "el_dates VARCHAR(50) DEFAULT ''"),
-        ("leave_requests", "cl_dates VARCHAR(50) DEFAULT ''"),
-        ("leave_requests", "approved_by VARCHAR(100) DEFAULT ''")
-    ]
-    
-    for table, col_def in columns_to_add:
-        try:
-            cursor.execute(f"ALTER TABLE {table} ADD COLUMN IF NOT EXISTS {col_def};")
-            conn.commit()
-        except Exception as e:
-            conn.rollback()
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        # 1. Base Tables Creation
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS users (
+                user_id VARCHAR(50) PRIMARY KEY,
+                password VARCHAR(100) NOT NULL,
+                name VARCHAR(100) NOT NULL,
+                role VARCHAR(20) NOT NULL,
+                assigned_admin TEXT,
+                joining_date VARCHAR(20),
+                el_balance INT DEFAULT 0,
+                cl_balance INT DEFAULT 0,
+                last_el_update INT DEFAULT 0,
+                last_cl_update INT DEFAULT 0
+            );
+        ''')
+        
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS leave_requests (
+                id SERIAL PRIMARY KEY,
+                user_id VARCHAR(50) NOT NULL,
+                leave_type VARCHAR(50) NOT NULL,
+                start_date VARCHAR(20) NOT NULL,
+                end_date VARCHAR(20) NOT NULL,
+                el_dates VARCHAR(50) DEFAULT '',
+                cl_dates VARCHAR(50) DEFAULT '',
+                reason TEXT NOT NULL,
+                status VARCHAR(20) DEFAULT 'Pending',
+                approved_by VARCHAR(100) DEFAULT ''
+            );
+        ''')
+        conn.commit()
 
-    cursor.execute('''
-        INSERT INTO users (user_id, password, name, role, assigned_admin, joining_date) 
-        VALUES ('ADMIN1', 'admin123', 'Main Admin', 'admin', 'ADMIN1', '2020-01-01') 
-        ON CONFLICT (user_id) DO NOTHING;
-    ''')
-    
-    conn.commit()
-    cursor.close()
-    conn.close()
+        # 2. Individual Safe Alter Commands
+        migrations = [
+            "ALTER TABLE users ADD COLUMN IF NOT EXISTS assigned_admin TEXT DEFAULT 'ADMIN1';",
+            "ALTER TABLE users ADD COLUMN IF NOT EXISTS joining_date VARCHAR(20) DEFAULT '';",
+            "ALTER TABLE users ADD COLUMN IF NOT EXISTS el_balance INT DEFAULT 0;",
+            "ALTER TABLE users ADD COLUMN IF NOT EXISTS cl_balance INT DEFAULT 0;",
+            "ALTER TABLE users ADD COLUMN IF NOT EXISTS last_el_update INT DEFAULT 0;",
+            "ALTER TABLE users ADD COLUMN IF NOT EXISTS last_cl_update INT DEFAULT 0;",
+            "ALTER TABLE leave_requests ADD COLUMN IF NOT EXISTS el_dates VARCHAR(50) DEFAULT '';",
+            "ALTER TABLE leave_requests ADD COLUMN IF NOT EXISTS cl_dates VARCHAR(50) DEFAULT '';",
+            "ALTER TABLE leave_requests ADD COLUMN IF NOT EXISTS approved_by VARCHAR(100) DEFAULT '';"
+        ]
+        
+        for statement in migrations:
+            try:
+                cursor.execute(statement)
+                conn.commit()
+            except Exception as e:
+                conn.rollback()
+
+        # 3. Safe Insert Default Admin
+        cursor.execute('''
+            INSERT INTO users (user_id, password, name, role, assigned_admin, joining_date) 
+            VALUES ('ADMIN1', 'admin123', 'Main Admin', 'admin', 'ADMIN1', '2020-01-01') 
+            ON CONFLICT (user_id) DO NOTHING;
+        ''')
+        conn.commit()
+        cursor.close()
+        conn.close()
+    except Exception as err:
+        print("Database Init Error:", err)
 
 try:
     init_db()
@@ -87,7 +95,7 @@ except Exception as e:
 def update_leave_balances():
     try:
         conn = get_db_connection()
-        cursor = conn.cursor()
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
         
         today = datetime.now()
         current_year = today.year
@@ -100,11 +108,11 @@ def update_leave_balances():
         employees = cursor.fetchall()
         
         for emp in employees:
-            u_id, el, cl, last_el, last_cl = emp
-            last_el = last_el or 0
-            last_cl = last_cl or 0
-            el = el or 0
-            cl = cl or 0
+            u_id = emp['user_id']
+            el = emp['el_balance'] or 0
+            cl = emp['cl_balance'] or 0
+            last_el = emp['last_el_update'] or 0
+            last_cl = emp['last_cl_update'] or 0
             
             if last_el < half_key:
                 new_el = el + 15
@@ -129,18 +137,18 @@ def login():
         update_leave_balances()
         
         conn = get_db_connection()
-        cursor = conn.cursor()
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
         cursor.execute("SELECT user_id, password, name, role FROM users WHERE user_id = %s AND password = %s", (user_id, password))
         user = cursor.fetchone()
         cursor.close()
         conn.close()
         
         if user:
-            session['user_id'] = user[0]
-            session['name'] = user[2]
-            session['role'] = user[3]
+            session['user_id'] = user['user_id']
+            session['name'] = user['name']
+            session['role'] = user['role']
             
-            if user[3] == 'admin':
+            if user['role'] == 'admin':
                 return redirect(url_for('admin_dashboard'))
             else:
                 return redirect(url_for('user_dashboard'))
@@ -156,7 +164,7 @@ def user_dashboard():
     
     update_leave_balances()
     conn = get_db_connection()
-    cursor = conn.cursor()
+    cursor = conn.cursor(cursor_factory=RealDictCursor)
     
     if request.method == 'POST':
         leave_type = request.form['leave_type']
@@ -185,7 +193,7 @@ def user_dashboard():
         conn.commit()
     
     cursor.execute("SELECT el_balance, cl_balance FROM users WHERE user_id = %s", (session['user_id'],))
-    balances = cursor.fetchone()
+    balances = cursor.fetchone() or {'el_balance': 0, 'cl_balance': 0}
     
     cursor.execute("SELECT id, leave_type, start_date, end_date, el_dates, cl_dates, reason, status, approved_by FROM leave_requests WHERE user_id = %s ORDER BY id DESC", (session['user_id'],))
     requests = cursor.fetchall()
@@ -199,7 +207,7 @@ def user_dashboard():
 def cancel_leave(req_id):
     if 'user_id' in session:
         conn = get_db_connection()
-        cursor = conn.cursor()
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
         
         cursor.execute('''
             SELECT user_id, leave_type, start_date, end_date, el_dates, cl_dates, status 
@@ -208,7 +216,13 @@ def cancel_leave(req_id):
         data = cursor.fetchone()
         
         if data:
-            u_id, l_type, start_date, end_date, el_dates, cl_dates, status = data
+            u_id = data['user_id']
+            l_type = data['leave_type']
+            start_date = data['start_date']
+            end_date = data['end_date']
+            el_dates = data['el_dates']
+            cl_dates = data['cl_dates']
+            status = data['status']
             
             if session['role'] == 'employee' and session['user_id'] != u_id:
                 cursor.close()
@@ -249,7 +263,7 @@ def admin_dashboard():
         
     update_leave_balances()
     conn = get_db_connection()
-    cursor = conn.cursor()
+    cursor = conn.cursor(cursor_factory=RealDictCursor)
     
     if request.method == 'POST':
         action_type = request.form.get('action_type')
@@ -266,8 +280,8 @@ def admin_dashboard():
             el_input = request.form.get('el')
             cl_input = request.form.get('cl')
             
-            el = int(el_input) if el_input != "" and el_input is not None else 15
-            cl = int(cl_input) if cl_input != "" and cl_input is not None else 8
+            el = int(el_input) if el_input and el_input.strip() != "" else 15
+            cl = int(cl_input) if cl_input and cl_input.strip() != "" else 8
             
             today = datetime.now()
             half = 1 if today.month <= 6 else 2
@@ -297,7 +311,7 @@ def admin_dashboard():
                 conn.rollback()
             
     cursor.execute('''
-        SELECT leave_requests.id, leave_requests.user_id, users.name, leave_requests.leave_type, 
+        SELECT leave_requests.id, leave_requests.user_id, users.name as user_name, leave_requests.leave_type, 
                leave_requests.start_date, leave_requests.end_date, leave_requests.el_dates, leave_requests.cl_dates,
                leave_requests.reason, leave_requests.status, users.assigned_admin, leave_requests.approved_by 
         FROM leave_requests 
@@ -336,7 +350,7 @@ def delete_user(user_id):
 def action(req_id, status):
     if 'user_id' in session and session['role'] == 'admin':
         conn = get_db_connection()
-        cursor = conn.cursor()
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
         
         cursor.execute('''
             SELECT leave_requests.user_id, leave_requests.leave_type, leave_requests.start_date, leave_requests.end_date, 
@@ -349,10 +363,18 @@ def action(req_id, status):
         data = cursor.fetchone()
         
         if data:
-            u_id, l_type, start_date, end_date, el_dates, cl_dates, current_status, assigned_admin, current_el, current_cl = data
+            u_id = data['user_id']
+            l_type = data['leave_type']
+            start_date = data['start_date']
+            end_date = data['end_date']
+            el_dates = data['el_dates']
+            cl_dates = data['cl_dates']
+            current_status = data['status']
+            assigned_admin = data['assigned_admin'] or ""
+            current_el = data['el_balance'] or 0
+            current_cl = data['cl_balance'] or 0
+            
             assigned_list = [a.strip() for a in assigned_admin.split(',')] if assigned_admin else []
-            current_el = current_el or 0
-            current_cl = current_cl or 0
             
             if session['user_id'] in assigned_list or session['user_id'] == 'ADMIN1':
                 now_str = datetime.now().strftime("%d-%b-%Y %I:%M %p")
