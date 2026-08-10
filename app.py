@@ -1,5 +1,6 @@
 import os
 import psycopg2
+from datetime import datetime
 from flask import Flask, render_template, request, redirect, url_for, session
 
 app = Flask(__name__)
@@ -11,19 +12,17 @@ def get_db_connection():
     if db_url and db_url.startswith("postgres://"):
         db_url = db_url.replace("postgres://", "postgresql://", 1)
     
-    # Render External / Local Fallback
     if not db_url:
-        raise ValueError("DATABASE_URL Environment Variable सापडला नाही. कृपया Render मध्ये DATABASE_URL सेट करा.")
+        raise ValueError("DATABASE_URL Environment Variable सापडला नाही.")
         
     conn = psycopg2.connect(db_url)
     return conn
 
-# Database Table Initialization
+# Database Init
 def init_db():
     conn = get_db_connection()
     cursor = conn.cursor()
     
-    # Users Table
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS users (
             user_id VARCHAR(50) PRIMARY KEY,
@@ -36,7 +35,6 @@ def init_db():
         );
     ''')
     
-    # Leave Requests Table
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS leave_requests (
             id SERIAL PRIMARY KEY,
@@ -49,7 +47,6 @@ def init_db():
         );
     ''')
     
-    # Default Main Admin User Creation
     cursor.execute('''
         INSERT INTO users (user_id, password, name, role, assigned_admin) 
         VALUES ('ADMIN1', 'admin123', 'Main Admin', 'admin', '') 
@@ -60,7 +57,6 @@ def init_db():
     cursor.close()
     conn.close()
 
-# System Startup Initialization
 try:
     init_db()
 except Exception as e:
@@ -118,13 +114,58 @@ def user_dashboard():
     cursor.execute("SELECT el_balance, cl_balance FROM users WHERE user_id = %s", (session['user_id'],))
     balances = cursor.fetchone()
     
-    cursor.execute("SELECT leave_type, start_date, end_date, reason, status FROM leave_requests WHERE user_id = %s ORDER BY id DESC", (session['user_id'],))
+    cursor.execute("SELECT id, leave_type, start_date, end_date, reason, status FROM leave_requests WHERE user_id = %s ORDER BY id DESC", (session['user_id'],))
     requests = cursor.fetchall()
     
     cursor.close()
     conn.close()
     
     return render_template('dashboard.html', name=session['name'], balances=balances, requests=requests)
+
+# Employee Leave Cancel Route
+@app.route('/cancel_leave/<int:req_id>')
+def cancel_leave(req_id):
+    if 'user_id' in session:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            SELECT leave_requests.user_id, leave_requests.leave_type, leave_requests.start_date, leave_requests.end_date, leave_requests.status 
+            FROM leave_requests WHERE id = %s
+        ''', (req_id,))
+        data = cursor.fetchone()
+        
+        if data:
+            u_id, l_type, start_date, end_date, status = data
+            
+            # कर्मचाऱ्याने स्वतःचाच अर्ज कॅन्सल केला आहे का तपासा
+            if session['role'] == 'employee' and session['user_id'] != u_id:
+                cursor.close()
+                conn.close()
+                return redirect(url_for('user_dashboard'))
+
+            # जर मंजूर झालेली रजा असेल, तर बॅलन्स परत (Restore) करा
+            if status == 'Approved':
+                start_dt = datetime.strptime(start_date, "%Y-%m-%d")
+                end_dt = datetime.strptime(end_date, "%Y-%m-%d")
+                total_days = (end_dt - start_dt).days + 1
+                
+                if total_days > 0:
+                    if l_type == 'EL':
+                        cursor.execute("UPDATE users SET el_balance = el_balance + %s WHERE user_id = %s", (total_days, u_id))
+                    elif l_type == 'CL':
+                        cursor.execute("UPDATE users SET cl_balance = cl_balance + %s WHERE user_id = %s", (total_days, u_id))
+            
+            # अर्जाचा स्टेटस Cancelled करा
+            cursor.execute("UPDATE leave_requests SET status = 'Cancelled' WHERE id = %s", (req_id,))
+            conn.commit()
+            
+        cursor.close()
+        conn.close()
+
+    if session.get('role') == 'admin':
+        return redirect(url_for('admin_dashboard'))
+    return redirect(url_for('user_dashboard'))
 
 # Admin Dashboard
 @app.route('/admin', methods=['GET', 'POST'])
@@ -138,7 +179,6 @@ def admin_dashboard():
     if request.method == 'POST':
         action_type = request.form.get('action_type')
         
-        # १. नवीन Employee जोडणे
         if action_type == 'add_employee':
             u_id = request.form['user_id']
             pwd = request.form['password']
@@ -155,9 +195,7 @@ def admin_dashboard():
                 conn.commit()
             except Exception as err:
                 conn.rollback()
-                print(f"Error adding employee: {err}")
 
-        # २. नवीन Admin जोडणे
         elif action_type == 'add_admin':
             u_id = request.form['user_id']
             pwd = request.form['password']
@@ -171,7 +209,6 @@ def admin_dashboard():
                 conn.commit()
             except Exception as err:
                 conn.rollback()
-                print(f"Error adding admin: {err}")
             
     cursor.execute('''
         SELECT leave_requests.id, leave_requests.user_id, users.name, leave_requests.leave_type, 
@@ -194,28 +231,40 @@ def admin_dashboard():
     
     return render_template('admin.html', requests=requests, users_list=users_list, admins_list=admins_list, current_admin=session['user_id'])
 
-# Approve / Reject Action
+# Approve / Reject Action (फक्त असाइन असलेल्या ॲडमिनलाच परवानगी)
 @app.route('/action/<int:req_id>/<string:status>')
 def action(req_id, status):
     if 'user_id' in session and session['role'] == 'admin':
         conn = get_db_connection()
         cursor = conn.cursor()
         
-        cursor.execute("UPDATE leave_requests SET status = %s WHERE id = %s", (status, req_id))
+        cursor.execute('''
+            SELECT leave_requests.user_id, leave_requests.leave_type, leave_requests.start_date, leave_requests.end_date, leave_requests.status, users.assigned_admin 
+            FROM leave_requests 
+            JOIN users ON leave_requests.user_id = users.user_id 
+            WHERE leave_requests.id = %s
+        ''', (req_id,))
+        data = cursor.fetchone()
         
-        if status == 'Approved':
-            cursor.execute("SELECT user_id, leave_type FROM leave_requests WHERE id = %s", (req_id,))
-            data = cursor.fetchone()
-            if data:
-                u_id = data[0]
-                l_type = data[1]
-                
-                if l_type == 'EL':
-                    cursor.execute("UPDATE users SET el_balance = el_balance - 1 WHERE user_id = %s", (u_id,))
-                elif l_type == 'CL':
-                    cursor.execute("UPDATE users SET cl_balance = cl_balance - 1 WHERE user_id = %s", (u_id,))
+        if data:
+            u_id, l_type, start_date, end_date, current_status, assigned_admin = data
             
-        conn.commit()
+            # १. तपासणे: हा ॲडमिन या कर्मचाऱ्याचा Assigned Admin आहे का?
+            if assigned_admin == session['user_id']:
+                if status == 'Approved' and current_status != 'Approved':
+                    start_dt = datetime.strptime(start_date, "%Y-%m-%d")
+                    end_dt = datetime.strptime(end_date, "%Y-%m-%d")
+                    total_days = (end_dt - start_dt).days + 1
+                    
+                    if total_days > 0:
+                        if l_type == 'EL':
+                            cursor.execute("UPDATE users SET el_balance = el_balance - %s WHERE user_id = %s", (total_days, u_id))
+                        elif l_type == 'CL':
+                            cursor.execute("UPDATE users SET cl_balance = cl_balance - %s WHERE user_id = %s", (total_days, u_id))
+                
+                cursor.execute("UPDATE leave_requests SET status = %s WHERE id = %s", (status, req_id))
+                conn.commit()
+                
         cursor.close()
         conn.close()
         
