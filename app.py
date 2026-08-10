@@ -1,47 +1,70 @@
+import os
+import psycopg2
 from flask import Flask, render_template, request, redirect, url_for, session
-import sqlite3
 
 app = Flask(__name__)
 app.secret_key = 'super_secret_key'
 
-# Database Setup
+# Database Connection Helper Function
+def get_db_connection():
+    db_url = os.environ.get('DATABASE_URL')
+    if db_url and db_url.startswith("postgres://"):
+        db_url = db_url.replace("postgres://", "postgresql://", 1)
+    
+    # Render External / Local Fallback
+    if not db_url:
+        raise ValueError("DATABASE_URL Environment Variable सापडला नाही. कृपया Render मध्ये DATABASE_URL सेट करा.")
+        
+    conn = psycopg2.connect(db_url)
+    return conn
+
+# Database Table Initialization
 def init_db():
-    conn = sqlite3.connect('database.db')
+    conn = get_db_connection()
     cursor = conn.cursor()
     
-    # Users Table (फक्त EL आणि CL balances ठेवले आहेत)
+    # Users Table
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS users (
-            user_id TEXT PRIMARY KEY,
-            password TEXT,
-            name TEXT,
-            role TEXT,
-            assigned_admin TEXT,
-            el_balance INTEGER DEFAULT 0,
-            cl_balance INTEGER DEFAULT 0
-        )
+            user_id VARCHAR(50) PRIMARY KEY,
+            password VARCHAR(100) NOT NULL,
+            name VARCHAR(100) NOT NULL,
+            role VARCHAR(20) NOT NULL,
+            assigned_admin VARCHAR(50),
+            el_balance INT DEFAULT 0,
+            cl_balance INT DEFAULT 0
+        );
     ''')
     
     # Leave Requests Table
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS leave_requests (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id TEXT,
-            leave_type TEXT,
-            start_date TEXT,
-            end_date TEXT,
-            reason TEXT,
-            status TEXT DEFAULT 'Pending'
-        )
+            id SERIAL PRIMARY KEY,
+            user_id VARCHAR(50) NOT NULL,
+            leave_type VARCHAR(20) NOT NULL,
+            start_date VARCHAR(20) NOT NULL,
+            end_date VARCHAR(20) NOT NULL,
+            reason TEXT NOT NULL,
+            status VARCHAR(20) DEFAULT 'Pending'
+        );
     ''')
     
-    # Default Main Admin
-    cursor.execute("INSERT OR IGNORE INTO users (user_id, password, name, role, assigned_admin) VALUES ('ADMIN1', 'admin123', 'Main Admin', 'admin', '')")
+    # Default Main Admin User Creation
+    cursor.execute('''
+        INSERT INTO users (user_id, password, name, role, assigned_admin) 
+        VALUES ('ADMIN1', 'admin123', 'Main Admin', 'admin', '') 
+        ON CONFLICT (user_id) DO NOTHING;
+    ''')
     
     conn.commit()
+    cursor.close()
     conn.close()
 
-init_db()
+# System Startup Initialization
+try:
+    init_db()
+except Exception as e:
+    print(f"Database setup error: {e}")
 
 # Login Route
 @app.route('/', methods=['GET', 'POST'])
@@ -50,10 +73,11 @@ def login():
         user_id = request.form['user_id']
         password = request.form['password']
         
-        conn = sqlite3.connect('database.db')
+        conn = get_db_connection()
         cursor = conn.cursor()
-        cursor.execute("SELECT * FROM users WHERE user_id = ? AND password = ?", (user_id, password))
+        cursor.execute("SELECT user_id, password, name, role FROM users WHERE user_id = %s AND password = %s", (user_id, password))
         user = cursor.fetchone()
+        cursor.close()
         conn.close()
         
         if user:
@@ -66,7 +90,7 @@ def login():
             else:
                 return redirect(url_for('user_dashboard'))
         else:
-            return "गलत User ID किंवा Password!"
+            return "गलत User ID किंवा Password! कृपया पुन्हा प्रयत्न करा."
             
     return render_template('login.html')
 
@@ -76,7 +100,7 @@ def user_dashboard():
     if 'user_id' not in session or session['role'] != 'employee':
         return redirect(url_for('login'))
     
-    conn = sqlite3.connect('database.db')
+    conn = get_db_connection()
     cursor = conn.cursor()
     
     if request.method == 'POST':
@@ -85,15 +109,19 @@ def user_dashboard():
         end_date = request.form['end_date']
         reason = request.form['reason']
         
-        cursor.execute("INSERT INTO leave_requests (user_id, leave_type, start_date, end_date, reason) VALUES (?, ?, ?, ?, ?)",
-                       (session['user_id'], leave_type, start_date, end_date, reason))
+        cursor.execute(
+            "INSERT INTO leave_requests (user_id, leave_type, start_date, end_date, reason) VALUES (%s, %s, %s, %s, %s)",
+            (session['user_id'], leave_type, start_date, end_date, reason)
+        )
         conn.commit()
     
-    cursor.execute("SELECT el_balance, cl_balance FROM users WHERE user_id = ?", (session['user_id'],))
+    cursor.execute("SELECT el_balance, cl_balance FROM users WHERE user_id = %s", (session['user_id'],))
     balances = cursor.fetchone()
     
-    cursor.execute("SELECT leave_type, start_date, end_date, reason, status FROM leave_requests WHERE user_id = ?", (session['user_id'],))
+    cursor.execute("SELECT leave_type, start_date, end_date, reason, status FROM leave_requests WHERE user_id = %s ORDER BY id DESC", (session['user_id'],))
     requests = cursor.fetchall()
+    
+    cursor.close()
     conn.close()
     
     return render_template('dashboard.html', name=session['name'], balances=balances, requests=requests)
@@ -104,27 +132,30 @@ def admin_dashboard():
     if 'user_id' not in session or session['role'] != 'admin':
         return redirect(url_for('login'))
         
-    conn = sqlite3.connect('database.db')
+    conn = get_db_connection()
     cursor = conn.cursor()
     
     if request.method == 'POST':
         action_type = request.form.get('action_type')
         
-        # १. नवीन Employee जोडणे (फक्त EL व CL सह)
+        # १. नवीन Employee जोडणे
         if action_type == 'add_employee':
             u_id = request.form['user_id']
             pwd = request.form['password']
             name = request.form['name']
             assigned_admin = request.form['assigned_admin']
-            el = request.form['el']
-            cl = request.form['cl']
+            el = int(request.form['el'])
+            cl = int(request.form['cl'])
             
             try:
-                cursor.execute("INSERT INTO users VALUES (?, ?, ?, 'employee', ?, ?, ?)", 
-                               (u_id, pwd, name, assigned_admin, el, cl))
+                cursor.execute(
+                    "INSERT INTO users (user_id, password, name, role, assigned_admin, el_balance, cl_balance) VALUES (%s, %s, %s, 'employee', %s, %s, %s)",
+                    (u_id, pwd, name, assigned_admin, el, cl)
+                )
                 conn.commit()
-            except sqlite3.IntegrityError:
-                pass
+            except Exception as err:
+                conn.rollback()
+                print(f"Error adding employee: {err}")
 
         # २. नवीन Admin जोडणे
         elif action_type == 'add_admin':
@@ -133,10 +164,14 @@ def admin_dashboard():
             name = request.form['name']
             
             try:
-                cursor.execute("INSERT INTO users VALUES (?, ?, ?, 'admin', '', 0, 0)", (u_id, pwd, name))
+                cursor.execute(
+                    "INSERT INTO users (user_id, password, name, role, assigned_admin, el_balance, cl_balance) VALUES (%s, %s, %s, 'admin', '', 0, 0)",
+                    (u_id, pwd, name)
+                )
                 conn.commit()
-            except sqlite3.IntegrityError:
-                pass
+            except Exception as err:
+                conn.rollback()
+                print(f"Error adding admin: {err}")
             
     cursor.execute('''
         SELECT leave_requests.id, leave_requests.user_id, users.name, leave_requests.leave_type, 
@@ -144,6 +179,7 @@ def admin_dashboard():
                leave_requests.status, users.assigned_admin 
         FROM leave_requests 
         JOIN users ON leave_requests.user_id = users.user_id
+        ORDER BY leave_requests.id DESC
     ''')
     requests = cursor.fetchall()
     
@@ -153,32 +189,36 @@ def admin_dashboard():
     cursor.execute("SELECT user_id, name FROM users WHERE role = 'admin'")
     admins_list = cursor.fetchall()
     
+    cursor.close()
     conn.close()
     
     return render_template('admin.html', requests=requests, users_list=users_list, admins_list=admins_list, current_admin=session['user_id'])
 
-# Approve / Reject Action (फक्त EL आणि CL वजा होतील)
+# Approve / Reject Action
 @app.route('/action/<int:req_id>/<string:status>')
 def action(req_id, status):
     if 'user_id' in session and session['role'] == 'admin':
-        conn = sqlite3.connect('database.db')
+        conn = get_db_connection()
         cursor = conn.cursor()
         
-        cursor.execute("UPDATE leave_requests SET status = ? WHERE id = ?", (status, req_id))
+        cursor.execute("UPDATE leave_requests SET status = %s WHERE id = %s", (status, req_id))
         
         if status == 'Approved':
-            cursor.execute("SELECT user_id, leave_type FROM leave_requests WHERE id = ?", (req_id,))
+            cursor.execute("SELECT user_id, leave_type FROM leave_requests WHERE id = %s", (req_id,))
             data = cursor.fetchone()
-            u_id = data[0]
-            l_type = data[1]
-            
-            if l_type == 'EL':
-                cursor.execute("UPDATE users SET el_balance = el_balance - 1 WHERE user_id = ?", (u_id,))
-            elif l_type == 'CL':
-                cursor.execute("UPDATE users SET cl_balance = cl_balance - 1 WHERE user_id = ?", (u_id,))
+            if data:
+                u_id = data[0]
+                l_type = data[1]
+                
+                if l_type == 'EL':
+                    cursor.execute("UPDATE users SET el_balance = el_balance - 1 WHERE user_id = %s", (u_id,))
+                elif l_type == 'CL':
+                    cursor.execute("UPDATE users SET cl_balance = cl_balance - 1 WHERE user_id = %s", (u_id,))
             
         conn.commit()
+        cursor.close()
         conn.close()
+        
     return redirect(url_for('admin_dashboard'))
 
 # Logout
