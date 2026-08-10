@@ -25,7 +25,7 @@ PDF_ADMINS = [
     ('7347', 'MShi@7347', 'Mayur D Shilame', 'SSE/Telecom/Incharge/SGDN'),
     ('80983', 'VSha@8098', 'Vipul Sharma', 'SSE/SIGNAL/SGDN'),
     ('80888', 'NKot@8088', 'Nihal Kotwal', 'SSE/SIGNAL/REAI'),
-    ('81366', 'SSha@8136', 'Shubam Sharma', 'JE/TELE', '7347')
+    ('81366', 'SSha@8136', 'Shubam Sharma', 'JE/SIGNAL/KARI')
 ]
 
 # 2. EMPLOYEES LIST (JE, Tech, Helpers, Clerks)
