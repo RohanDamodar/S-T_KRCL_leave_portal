@@ -29,6 +29,7 @@ def init_db():
                 user_id VARCHAR(50) PRIMARY KEY,
                 password VARCHAR(100) NOT NULL,
                 name VARCHAR(100) NOT NULL,
+                designation VARCHAR(100) DEFAULT '',
                 role VARCHAR(20) NOT NULL,
                 assigned_admin TEXT,
                 joining_date VARCHAR(20),
@@ -57,6 +58,7 @@ def init_db():
 
         # 2. Individual Safe Alter Commands
         migrations = [
+            "ALTER TABLE users ADD COLUMN IF NOT EXISTS designation VARCHAR(100) DEFAULT '';",
             "ALTER TABLE users ADD COLUMN IF NOT EXISTS assigned_admin TEXT DEFAULT 'ADMIN1';",
             "ALTER TABLE users ADD COLUMN IF NOT EXISTS joining_date VARCHAR(20) DEFAULT '';",
             "ALTER TABLE users ADD COLUMN IF NOT EXISTS el_balance INT DEFAULT 0;",
@@ -77,8 +79,8 @@ def init_db():
 
         # 3. Safe Insert Default Admin
         cursor.execute('''
-            INSERT INTO users (user_id, password, name, role, assigned_admin, joining_date) 
-            VALUES ('ADMIN1', 'admin123', 'Main Admin', 'admin', 'ADMIN1', '2020-01-01') 
+            INSERT INTO users (user_id, password, name, designation, role, assigned_admin, joining_date) 
+            VALUES ('ADMIN1', 'admin123', 'Main Admin', 'Senior Admin', 'admin', 'ADMIN1', '2020-01-01') 
             ON CONFLICT (user_id) DO NOTHING;
         ''')
         conn.commit()
@@ -138,7 +140,7 @@ def login():
         
         conn = get_db_connection()
         cursor = conn.cursor(cursor_factory=RealDictCursor)
-        cursor.execute("SELECT user_id, password, name, role FROM users WHERE user_id = %s AND password = %s", (user_id, password))
+        cursor.execute("SELECT user_id, password, name, designation, role FROM users WHERE user_id = %s AND password = %s", (user_id, password))
         user = cursor.fetchone()
         cursor.close()
         conn.close()
@@ -146,6 +148,7 @@ def login():
         if user:
             session['user_id'] = user['user_id']
             session['name'] = user['name']
+            session['designation'] = user['designation'] or ''
             session['role'] = user['role']
             
             if user['role'] == 'admin':
@@ -201,7 +204,7 @@ def user_dashboard():
     cursor.close()
     conn.close()
     
-    return render_template('dashboard.html', name=session['name'], balances=balances, requests=requests)
+    return render_template('dashboard.html', name=session['name'], designation=session.get('designation', ''), balances=balances, requests=requests)
 
 @app.route('/cancel_leave/<int:req_id>')
 def cancel_leave(req_id):
@@ -272,6 +275,7 @@ def admin_dashboard():
             u_id = request.form['user_id']
             pwd = request.form['password']
             name = request.form['name']
+            designation = request.form.get('designation', '')
             joining_date = request.form['joining_date']
             
             selected_admins = request.form.getlist('assigned_admins')
@@ -289,8 +293,8 @@ def admin_dashboard():
             
             try:
                 cursor.execute(
-                    "INSERT INTO users (user_id, password, name, role, assigned_admin, joining_date, el_balance, cl_balance, last_el_update, last_cl_update) VALUES (%s, %s, %s, 'employee', %s, %s, %s, %s, %s, %s)",
-                    (u_id, pwd, name, assigned_admin_str, joining_date, el, cl, half_key, today.year)
+                    "INSERT INTO users (user_id, password, name, designation, role, assigned_admin, joining_date, el_balance, cl_balance, last_el_update, last_cl_update) VALUES (%s, %s, %s, %s, 'employee', %s, %s, %s, %s, %s, %s)",
+                    (u_id, pwd, name, designation, assigned_admin_str, joining_date, el, cl, half_key, today.year)
                 )
                 conn.commit()
             except Exception as err:
@@ -300,18 +304,19 @@ def admin_dashboard():
             u_id = request.form['user_id']
             pwd = request.form['password']
             name = request.form['name']
+            designation = request.form.get('designation', 'Admin')
             
             try:
                 cursor.execute(
-                    "INSERT INTO users (user_id, password, name, role, assigned_admin, joining_date) VALUES (%s, %s, %s, 'admin', '', '')",
-                    (u_id, pwd, name)
+                    "INSERT INTO users (user_id, password, name, designation, role, assigned_admin, joining_date) VALUES (%s, %s, %s, %s, 'admin', '', '')",
+                    (u_id, pwd, name, designation)
                 )
                 conn.commit()
             except Exception as err:
                 conn.rollback()
             
     cursor.execute('''
-        SELECT leave_requests.id, leave_requests.user_id, users.name as user_name, leave_requests.leave_type, 
+        SELECT leave_requests.id, leave_requests.user_id, users.name as user_name, users.designation as user_designation, leave_requests.leave_type, 
                leave_requests.start_date, leave_requests.end_date, leave_requests.el_dates, leave_requests.cl_dates,
                leave_requests.reason, leave_requests.status, users.assigned_admin, leave_requests.approved_by 
         FROM leave_requests 
@@ -320,10 +325,10 @@ def admin_dashboard():
     ''')
     requests = cursor.fetchall()
     
-    cursor.execute("SELECT user_id, name, joining_date, assigned_admin, el_balance, cl_balance FROM users WHERE role = 'employee'")
+    cursor.execute("SELECT user_id, name, designation, joining_date, assigned_admin, el_balance, cl_balance FROM users WHERE role = 'employee'")
     users_list = cursor.fetchall()
     
-    cursor.execute("SELECT user_id, name FROM users WHERE role = 'admin'")
+    cursor.execute("SELECT user_id, name, designation FROM users WHERE role = 'admin'")
     admins_list = cursor.fetchall()
     
     cursor.close()
