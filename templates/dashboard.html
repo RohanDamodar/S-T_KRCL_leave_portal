@@ -13,6 +13,8 @@
         table { width: 100%; border-collapse: collapse; margin-top: 20px; }
         th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
         th { background-color: #f2f2f2; }
+        .btn-cancel { color: red; font-weight: bold; text-decoration: none; border: 1px solid red; padding: 3px 8px; border-radius: 4px; }
+        .btn-cancel:hover { background-color: #ffe6e6; }
     </style>
 </head>
 <body>
@@ -59,14 +61,22 @@
             <th>End Date</th>
             <th>Reason</th>
             <th>Status</th>
+            <th>Action</th>
         </tr>
         {% for req in requests %}
         <tr>
-            <td><b>{{ req[0] }}</b></td>
-            <td>{{ req[1] }}</td>
+            <td><b>{{ req[1] }}</b></td>
             <td>{{ req[2] }}</td>
             <td>{{ req[3] }}</td>
-            <td><b>{{ req[4] }}</b></td>
+            <td>{{ req[4] }}</td>
+            <td><b>{{ req[5] }}</b></td>
+            <td>
+                {% if req[5] != 'Cancelled' and req[5] != 'Rejected' %}
+                    <a href="/cancel_leave/{{ req[0] }}" class="btn-cancel" onclick="return confirm('तुम्हाला ही रजा रद्द करायची आहे का?');">Cancel Leave</a>
+                {% else %}
+                    -
+                {% endif %}
+            </td>
         </tr>
         {% endfor %}
     </table>
