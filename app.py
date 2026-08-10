@@ -6,7 +6,7 @@ from flask import Flask, render_template, request, redirect, url_for, session
 app = Flask(__name__)
 app.secret_key = 'super_secret_key'
 
-# Database Connection Helper Function
+# Database Connection Helper
 def get_db_connection():
     db_url = os.environ.get('DATABASE_URL')
     if db_url and db_url.startswith("postgres://"):
@@ -122,7 +122,7 @@ def user_dashboard():
     
     return render_template('dashboard.html', name=session['name'], balances=balances, requests=requests)
 
-# Employee Leave Cancel Route
+# Leave Cancel Route
 @app.route('/cancel_leave/<int:req_id>')
 def cancel_leave(req_id):
     if 'user_id' in session:
@@ -138,13 +138,11 @@ def cancel_leave(req_id):
         if data:
             u_id, l_type, start_date, end_date, status = data
             
-            # कर्मचाऱ्याने स्वतःचाच अर्ज कॅन्सल केला आहे का तपासा
             if session['role'] == 'employee' and session['user_id'] != u_id:
                 cursor.close()
                 conn.close()
                 return redirect(url_for('user_dashboard'))
 
-            # जर मंजूर झालेली रजा असेल, तर बॅलन्स परत (Restore) करा
             if status == 'Approved':
                 start_dt = datetime.strptime(start_date, "%Y-%m-%d")
                 end_dt = datetime.strptime(end_date, "%Y-%m-%d")
@@ -156,7 +154,6 @@ def cancel_leave(req_id):
                     elif l_type == 'CL':
                         cursor.execute("UPDATE users SET cl_balance = cl_balance + %s WHERE user_id = %s", (total_days, u_id))
             
-            # अर्जाचा स्टेटस Cancelled करा
             cursor.execute("UPDATE leave_requests SET status = 'Cancelled' WHERE id = %s", (req_id,))
             conn.commit()
             
@@ -231,7 +228,7 @@ def admin_dashboard():
     
     return render_template('admin.html', requests=requests, users_list=users_list, admins_list=admins_list, current_admin=session['user_id'])
 
-# Approve / Reject Action (फक्त असाइन असलेल्या ॲडमिनलाच परवानगी)
+# Approve / Reject Action
 @app.route('/action/<int:req_id>/<string:status>')
 def action(req_id, status):
     if 'user_id' in session and session['role'] == 'admin':
@@ -249,7 +246,6 @@ def action(req_id, status):
         if data:
             u_id, l_type, start_date, end_date, current_status, assigned_admin = data
             
-            # १. तपासणे: हा ॲडमिन या कर्मचाऱ्याचा Assigned Admin आहे का?
             if assigned_admin == session['user_id']:
                 if status == 'Approved' and current_status != 'Approved':
                     start_dt = datetime.strptime(start_date, "%Y-%m-%d")
@@ -264,7 +260,7 @@ def action(req_id, status):
                 
                 cursor.execute("UPDATE leave_requests SET status = %s WHERE id = %s", (status, req_id))
                 conn.commit()
-                
+
         cursor.close()
         conn.close()
         
