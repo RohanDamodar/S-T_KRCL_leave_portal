@@ -27,7 +27,7 @@ def init_db():
             password VARCHAR(100) NOT NULL,
             name VARCHAR(100) NOT NULL,
             role VARCHAR(20) NOT NULL,
-            assigned_admin VARCHAR(50),
+            assigned_admin TEXT,
             joining_date VARCHAR(20),
             el_balance INT DEFAULT 0,
             cl_balance INT DEFAULT 0,
@@ -51,6 +51,7 @@ def init_db():
     ''')
     
     try:
+        cursor.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS assigned_admin TEXT;")
         cursor.execute("ALTER TABLE leave_requests ADD COLUMN IF NOT EXISTS el_dates VARCHAR(50) DEFAULT '';")
         cursor.execute("ALTER TABLE leave_requests ADD COLUMN IF NOT EXISTS cl_dates VARCHAR(50) DEFAULT '';")
     except Exception as e:
@@ -58,7 +59,7 @@ def init_db():
 
     cursor.execute('''
         INSERT INTO users (user_id, password, name, role, assigned_admin, joining_date) 
-        VALUES ('ADMIN1', 'admin123', 'Main Admin', 'admin', '', '2020-01-01') 
+        VALUES ('ADMIN1', 'admin123', 'Main Admin', 'admin', 'ADMIN1', '2020-01-01') 
         ON CONFLICT (user_id) DO NOTHING;
     ''')
     
@@ -88,12 +89,10 @@ def update_leave_balances():
     for emp in employees:
         u_id, el, cl, last_el, last_cl = emp
         
-        # 1. Auto Add 15 EL every 6 months
         if last_el < half_key:
             new_el = el + 15
             cursor.execute("UPDATE users SET el_balance = %s, last_el_update = %s WHERE user_id = %s", (new_el, half_key, u_id))
             
-        # 2. Reset CL to 8 every year
         if last_cl < current_year:
             new_cl = 8
             cursor.execute("UPDATE users SET cl_balance = %s, last_cl_update = %s WHERE user_id = %s", (new_cl, current_year, u_id))
@@ -241,7 +240,10 @@ def admin_dashboard():
             pwd = request.form['password']
             name = request.form['name']
             joining_date = request.form['joining_date']
-            assigned_admin = request.form['assigned_admin']
+            
+            # Multiple Assigned Admins (Comma Separated string)
+            selected_admins = request.form.getlist('assigned_admins')
+            assigned_admin_str = ",".join(selected_admins) if selected_admins else session['user_id']
             
             el_input = request.form.get('el')
             cl_input = request.form.get('cl')
@@ -256,7 +258,7 @@ def admin_dashboard():
             try:
                 cursor.execute(
                     "INSERT INTO users (user_id, password, name, role, assigned_admin, joining_date, el_balance, cl_balance, last_el_update, last_cl_update) VALUES (%s, %s, %s, 'employee', %s, %s, %s, %s, %s, %s)",
-                    (u_id, pwd, name, assigned_admin, joining_date, el, cl, half_key, today.year)
+                    (u_id, pwd, name, assigned_admin_str, joining_date, el, cl, half_key, today.year)
                 )
                 conn.commit()
             except Exception as err:
@@ -329,8 +331,10 @@ def action(req_id, status):
         
         if data:
             u_id, l_type, start_date, end_date, el_dates, cl_dates, current_status, assigned_admin = data
+            assigned_list = [a.strip() for a in assigned_admin.split(',')] if assigned_admin else []
             
-            if assigned_admin == session['user_id']:
+            # Checks if current logged in admin is authorized
+            if session['user_id'] in assigned_list or session['user_id'] == 'ADMIN1':
                 if status == 'Approved' and current_status != 'Approved':
                     if l_type == 'EL+CL':
                         if el_dates:
