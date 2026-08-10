@@ -24,35 +24,36 @@
         /* Top Header Bar */
         .krcl-header {
             background-color: #ffffff;
-            padding: 10px 25px;
+            padding: 12px 30px;
             display: flex;
             align-items: center;
-            border-bottom: 1px solid #e0e0e0;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            border-bottom: 2px solid #0056b3;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
 
         .logo-section {
             display: flex;
             align-items: center;
-            gap: 15px;
+            gap: 20px;
         }
 
+        /* Konkan Railway Big Size Logo */
         .krcl-logo-img {
-            height: 52px;
+            height: 75px;
             width: auto;
             object-fit: contain;
         }
 
         .company-title h2 {
-            font-size: 18px;
+            font-size: 22px;
             color: #1a2b4c;
             font-weight: bold;
-            margin-bottom: 2px;
+            margin-bottom: 4px;
         }
 
         .company-title p {
-            font-size: 12px;
-            color: #555;
+            font-size: 13px;
+            color: #444;
             font-weight: 600;
         }
 
@@ -65,30 +66,21 @@
         }
 
         .portal-strip h1 {
-            font-size: 20px;
+            font-size: 22px;
             color: #1a2b4c;
             font-weight: bold;
         }
 
-        /* Main Section with Konkan Railway Scenic Background */
+        /* Main Section with Konkan Scenic Railway Background */
         .main-content {
             flex: 1;
-            background: linear-gradient(rgba(0, 0, 0, 0.15), rgba(0, 0, 0, 0.15)), 
-                        url('https://wps.konkanrailway.com/wpcli/assets/images/header-bg.jpg') no-repeat center center;
+            background: linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.3)), 
+                        url('https://images.unsplash.com/photo-1541872703-74c5e44368f9?q=80&w=1600') no-repeat center center;
             background-size: cover;
             display: flex;
             justify-content: center;
             align-items: center;
             padding: 40px 20px;
-        }
-
-        /* Fallback background image in case KRCL internal link restricts */
-        @supports not (background: url('https://wps.konkanrailway.com/wpcli/assets/images/header-bg.jpg')) {
-            .main-content {
-                background: linear-gradient(rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.2)), 
-                            url('https://images.unsplash.com/photo-1541872703-74c5e44368f9?q=80&w=1600') no-repeat center center;
-                background-size: cover;
-            }
         }
 
         /* Login Card */
@@ -98,7 +90,7 @@
             border-radius: 8px;
             width: 100%;
             max-width: 420px;
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
             backdrop-filter: blur(4px);
         }
 
@@ -205,10 +197,9 @@
     <!-- Header Section -->
     <header class="krcl-header">
         <div class="logo-section">
-            <!-- KRCL Logo Image -->
-            <img src="https://wps.konkanrailway.com/wpcli/assets/images/krcl-logo.png" 
-                 onerror="this.onerror=null; this.src='https://upload.wikimedia.org/wikipedia/commons/1/17/Indian_Railway_Report_Logo.png';" 
-                 alt="KRCL Logo" class="krcl-logo-img">
+            <!-- Official KRCL Logo (Reliable High-Res Link) -->
+            <img src="https://upload.wikimedia.org/wikipedia/en/2/23/Konkan_Railway_logo.png" 
+                 alt="Konkan Railway Logo" class="krcl-logo-img">
             <div class="company-title">
                 <h2>कोंकण रेलवे कॉर्पोरेशन लिमिटेड</h2>
                 <p>(भारत सरकार का उपक्रम) / Konkan Railway Corporation Limited (A Govt. Of India Undertaking)</p>
