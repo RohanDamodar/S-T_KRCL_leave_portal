@@ -76,7 +76,12 @@
         <div class="user-nav">
             <div class="user-info">
                 <i class="fa-solid fa-circle-user fa-lg" style="color: #0056b3;"></i>
-                <span>{{ name }}</span>
+                <div>
+                    <span>{{ name }}</span>
+                    {% if designation %}
+                        <br><small style="color: #0056b3; font-weight: normal;">({{ designation }})</small>
+                    {% endif %}
+                </div>
             </div>
             <a href="/logout" class="btn-logout"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
         </div>
@@ -89,7 +94,7 @@
             <div class="balance-card">
                 <div class="card-details">
                     <p>EL Balance (Earned Leave)</p>
-                    <h3>{{ balances[0] }}</h3>
+                    <h3>{{ balances['el_balance'] }}</h3>
                 </div>
                 <div class="card-icon"><i class="fa-solid fa-calendar-check"></i></div>
             </div>
@@ -97,7 +102,7 @@
             <div class="balance-card cl">
                 <div class="card-details">
                     <p>CL Balance (Casual Leave)</p>
-                    <h3>{{ balances[1] }}</h3>
+                    <h3>{{ balances['cl_balance'] }}</h3>
                 </div>
                 <div class="card-icon"><i class="fa-solid fa-umbrella-beach"></i></div>
             </div>
@@ -174,37 +179,37 @@
                         {% if requests %}
                             {% for req in requests %}
                             <tr>
-                                <td><b>{{ req[1] }}</b></td>
+                                <td><b>{{ req['leave_type'] }}</b></td>
                                 <td>
-                                    {% if req[1] == 'EL+CL' %}
-                                        <small style="display:block;"><b>EL:</b> {{ req[4] }}</small>
-                                        <small style="display:block;"><b>CL:</b> {{ req[5] }}</small>
+                                    {% if req['leave_type'] == 'EL+CL' %}
+                                        <small style="display:block;"><b>EL:</b> {{ req['el_dates'] }}</small>
+                                        <small style="display:block;"><b>CL:</b> {{ req['cl_dates'] }}</small>
                                     {% else %}
-                                        {{ req[2] }} to {{ req[3] }}
+                                        {{ req['start_date'] }} to {{ req['end_date'] }}
                                     {% endif %}
                                 </td>
-                                <td>{{ req[6] }}</td>
+                                <td>{{ req['reason'] }}</td>
                                 <td>
-                                    {% if req[7] == 'Approved' %}
+                                    {% if req['status'] == 'Approved' %}
                                         <span class="badge badge-approved">Approved</span>
-                                    {% elif req[7] == 'Pending' %}
+                                    {% elif req['status'] == 'Pending' %}
                                         <span class="badge badge-pending">Pending</span>
-                                    {% elif req[7] == 'Rejected' %}
+                                    {% elif req['status'] == 'Rejected' %}
                                         <span class="badge badge-rejected">Rejected</span>
                                     {% else %}
                                         <span class="badge badge-cancelled">Cancelled</span>
                                     {% endif %}
                                 </td>
                                 <td>
-                                    {% if req[8] %}
-                                        <small style="color: #0056b3; font-weight: bold;">{{ req[8] }}</small>
+                                    {% if req['approved_by'] %}
+                                        <small style="color: #0056b3; font-weight: bold;">{{ req['approved_by'] }}</small>
                                     {% else %}
                                         -
                                     {% endif %}
                                 </td>
                                 <td>
-                                    {% if req[7] != 'Cancelled' and req[7] != 'Rejected' %}
-                                        <a href="/cancel_leave/{{ req[0] }}" class="btn-cancel" onclick="return confirm('तुम्हाला ही रजा रद्द करायची आहे का?');">Cancel</a>
+                                    {% if req['status'] != 'Cancelled' and req['status'] != 'Rejected' %}
+                                        <a href="/cancel_leave/{{ req['id'] }}" class="btn-cancel" onclick="return confirm('तुम्हाला ही रजा रद्द करायची आहे का?');">Cancel</a>
                                     {% else %}
                                         -
                                     {% endif %}
