@@ -32,6 +32,8 @@
         .form-group input, .form-group select { padding: 9px 12px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 13px; outline: none; background-color: #f8fafc; }
         .form-group input:focus, .form-group select:focus { border-color: #0056b3; background-color: #ffffff; }
         
+        .balance-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        
         .btn-submit-emp { width: 100%; background-color: #10b981; color: white; border: none; padding: 10px; font-size: 14px; font-weight: bold; border-radius: 4px; cursor: pointer; margin-top: 10px; display: flex; justify-content: center; align-items: center; gap: 6px; }
         .btn-submit-admin { width: 100%; background-color: #0056b3; color: white; border: none; padding: 10px; font-size: 14px; font-weight: bold; border-radius: 4px; cursor: pointer; margin-top: 10px; display: flex; justify-content: center; align-items: center; gap: 6px; }
         
@@ -52,6 +54,10 @@
         .btn-action-approve { background-color: #10b981; color: white; padding: 5px 10px; border-radius: 4px; text-decoration: none; font-weight: bold; font-size: 12px; margin-right: 5px; }
         .btn-action-reject { background-color: #ef4444; color: white; padding: 5px 10px; border-radius: 4px; text-decoration: none; font-weight: bold; font-size: 12px; margin-right: 5px; }
         .btn-action-cancel { color: #dc2626; border: 1px solid #fca5a5; background-color: #fef2f2; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; text-decoration: none; }
+        
+        .btn-delete-user { color: #dc2626; background: #fee2e2; border: 1px solid #fca5a5; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; text-decoration: none; }
+        .btn-delete-user:hover { background: #dc2626; color: white; }
+
         .footer { margin-top: auto; background-color: #e8eef7; text-align: center; padding: 12px; font-size: 12px; color: #555; border-top: 1px solid #d0dbe8; }
     </style>
 </head>
@@ -117,9 +123,13 @@
                         </select>
                     </div>
 
-                    <p style="font-size: 11px; color: #0056b3; font-weight: bold; margin-bottom: 10px;">
-                        <i class="fa-solid fa-info-circle"></i> सुरुवातीस १५ EL आणि ८ CL आपोआप क्रेडिट होतील.
-                    </p>
+                    <div class="form-group">
+                        <label>Current Remaining Balances (Optional - Default 15 EL & 8 CL):</label>
+                        <div class="balance-inputs">
+                            <input type="number" name="el" placeholder="Remaining EL (eg: 10)">
+                            <input type="number" name="cl" placeholder="Remaining CL (eg: 5)">
+                        </div>
+                    </div>
 
                     <button type="submit" class="btn-submit-emp">
                         <i class="fa-solid fa-check-circle"></i> Add Employee
@@ -150,7 +160,7 @@
                         <input type="text" name="name" placeholder="Full Name" required>
                     </div>
 
-                    <button type="submit" class="btn-submit-admin" style="margin-top: 80px;">
+                    <button type="submit" class="btn-submit-admin" style="margin-top: 130px;">
                         <i class="fa-solid fa-plus-circle"></i> Add Admin
                     </button>
                 </form>
@@ -172,6 +182,7 @@
                             <th>Assigned Admin</th>
                             <th>EL Balance</th>
                             <th>CL Balance</th>
+                            <th>Action</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -184,11 +195,16 @@
                                 <td>{{ u[3] }}</td>
                                 <td><b style="color: #0056b3;">{{ u[4] }}</b></td>
                                 <td><b style="color: #10b981;">{{ u[5] }}</b></td>
+                                <td>
+                                    <a href="/delete_user/{{ u[0] }}" class="btn-delete-user" onclick="return confirm('तुम्हाला या कर्मचाऱ्याचा अकाऊंट सिस्टीममधून काढून टाकायचा आहे का?');">
+                                        <i class="fa-solid fa-user-xmark"></i> Delete
+                                    </a>
+                                </td>
                             </tr>
                             {% endfor %}
                         {% else %}
                             <tr>
-                                <td colspan="6" style="text-align: center; color: #777;">कोणतेही कर्मचारी जोडलेले नाहीत.</td>
+                                <td colspan="7" style="text-align: center; color: #777;">कोणतेही कर्मचारी जोडलेले नाहीत.</td>
                             </tr>
                         {% endif %}
                     </tbody>
