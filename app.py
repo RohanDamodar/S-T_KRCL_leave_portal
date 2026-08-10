@@ -48,7 +48,6 @@ def init_db():
         );
     ''')
     
-    # Missing columns auto-add Migration
     try:
         cursor.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS joining_date VARCHAR(20);")
         cursor.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS last_el_update INT DEFAULT 0;")
@@ -71,7 +70,6 @@ try:
 except Exception as e:
     print(f"Database setup error: {e}")
 
-# ऑटोमॅटिक रजा अपडेट (Auto Add EL & Auto Reset CL) करणारा फंक्शन
 def update_leave_balances():
     conn = get_db_connection()
     cursor = conn.cursor()
@@ -80,9 +78,8 @@ def update_leave_balances():
     current_year = today.year
     current_month = today.month
     
-    # ६ महिन्यांचा काळ (1 = Jan-Jun, 2 = Jul-Dec)
     current_half = 1 if current_month <= 6 else 2
-    half_key = int(f"{current_year}{current_half}") # उदा: 20261 किंवा 20262
+    half_key = int(f"{current_year}{current_half}")
     
     cursor.execute("SELECT user_id, el_balance, cl_balance, last_el_update, last_cl_update FROM users WHERE role = 'employee'")
     employees = cursor.fetchall()
@@ -90,28 +87,26 @@ def update_leave_balances():
     for emp in employees:
         u_id, el, cl, last_el, last_cl = emp
         
-        # १. EL Auto-Add (दर ६ महिन्यांनी १५ EL जमा होणे - Remaining EL शिल्लक राहतील)
+        # 1. Auto Add 15 EL every 6 months
         if last_el < half_key:
             new_el = el + 15
             cursor.execute("UPDATE users SET el_balance = %s, last_el_update = %s WHERE user_id = %s", (new_el, half_key, u_id))
             
-        # २. CL Auto Reset (दरवर्षी १ जानेवारीला जुन्या CL लॅप्स होऊन नवीन ८ CL मिळणे)
+        # 2. Reset CL to 8 every year
         if last_cl < current_year:
-            new_cl = 8  # जुन्या CL लॅप्स होऊन रिसेट ८ वर होतात
+            new_cl = 8
             cursor.execute("UPDATE users SET cl_balance = %s, last_cl_update = %s WHERE user_id = %s", (new_cl, current_year, u_id))
             
     conn.commit()
     cursor.close()
     conn.close()
 
-# Login Route
 @app.route('/', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
         user_id = request.form['user_id']
         password = request.form['password']
         
-        # लॉगिनच्या वेळी आपोआप रजा अपडेट तपासली जाईल
         update_leave_balances()
         
         conn = get_db_connection()
@@ -135,7 +130,6 @@ def login():
             
     return render_template('login.html')
 
-# Employee Dashboard
 @app.route('/dashboard', methods=['GET', 'POST'])
 def user_dashboard():
     if 'user_id' not in session or session['role'] != 'employee':
@@ -168,7 +162,6 @@ def user_dashboard():
     
     return render_template('dashboard.html', name=session['name'], balances=balances, requests=requests)
 
-# Leave Cancel Route
 @app.route('/cancel_leave/<int:req_id>')
 def cancel_leave(req_id):
     if 'user_id' in session:
@@ -210,7 +203,6 @@ def cancel_leave(req_id):
         return redirect(url_for('admin_dashboard'))
     return redirect(url_for('user_dashboard'))
 
-# Admin Dashboard
 @app.route('/admin', methods=['GET', 'POST'])
 def admin_dashboard():
     if 'user_id' not in session or session['role'] != 'admin':
@@ -230,11 +222,13 @@ def admin_dashboard():
             joining_date = request.form['joining_date']
             assigned_admin = request.form['assigned_admin']
             
-            # सुरुवातीला १५ EL आणि ८ CL मिळतील
-            el = 15
-            cl = 8
+            # मॅन्युअली टाकलेले किंवा डीफॉल्ट (15 EL, 8 CL)
+            el_input = request.form.get('el')
+            cl_input = request.form.get('cl')
             
-            # करंट पिरियड मार्क करणे
+            el = int(el_input) if el_input != "" else 15
+            cl = int(cl_input) if cl_input != "" else 8
+            
             today = datetime.now()
             half = 1 if today.month <= 6 else 2
             half_key = int(f"{today.year}{half}")
@@ -283,6 +277,24 @@ def admin_dashboard():
     
     return render_template('admin.html', requests=requests, users_list=users_list, admins_list=admins_list, current_admin=session['user_id'])
 
+# Delete Employee Route
+@app.route('/delete_user/<string:user_id>')
+def delete_user(user_id):
+    if 'user_id' in session and session['role'] == 'admin':
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        # कर्मचाऱ्याच्या सर्व रजांच्या अर्जांचे रेकॉर्ड काढून टाका
+        cursor.execute("DELETE FROM leave_requests WHERE user_id = %s", (user_id,))
+        # कर्मचाऱ्याचा अकाऊंट डिलीट करा
+        cursor.execute("DELETE FROM users WHERE user_id = %s AND role = 'employee'", (user_id,))
+        
+        conn.commit()
+        cursor.close()
+        conn.close()
+        
+    return redirect(url_for('admin_dashboard'))
+
 # Approve / Reject Action
 @app.route('/action/<int:req_id>/<string:status>')
 def action(req_id, status):
@@ -321,7 +333,6 @@ def action(req_id, status):
         
     return redirect(url_for('admin_dashboard'))
 
-# Logout
 @app.route('/logout')
 def logout():
     session.clear()
